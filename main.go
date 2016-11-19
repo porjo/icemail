@@ -1,22 +1,20 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"log"
-	"net"
-	"net/mail"
 	"os"
 	"time"
 
+	"github.com/blevesearch/bleve"
 	"github.com/boltdb/bolt"
 	"github.com/porjo/icemail/smtpd"
 )
 
 var db *bolt.DB
 var addr string = "127.0.0.1:2525"
-
-type handler func(net.Addr, string, []string, []byte) error
+var index bleve.Index
+var appName string = "icemail"
 
 func main() {
 	var err error
@@ -27,6 +25,17 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
+	// try opening index, otherwise try creating new
+	index, err = bleve.Open(appName + ".bleve")
+	if err != nil {
+		log.Printf("Creating new search index...")
+		mapping := bleve.NewIndexMapping()
+		index, err = bleve.New(appName+".bleve", mapping)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	go func() {
 
@@ -39,7 +48,7 @@ func main() {
 			// Encode stats to JSON and print to STDERR.
 			json.NewEncoder(os.Stderr).Encode(stats)
 
-			db.View(func(tx *bolt.Tx) error {
+			if err := db.View(func(tx *bolt.Tx) error {
 				buckets := 0
 				keys := 0
 				err := tx.ForEach(func(name []byte, b *bolt.Bucket) error {
@@ -55,48 +64,22 @@ func main() {
 				}
 				log.Printf("buckets %d keys %d\n", buckets, keys)
 				return nil
-			})
+			}); err != nil {
+				log.Printf("bolt view err %s\n", err)
+			}
+
+			// search for some text
+			query := bleve.NewMatchQuery("pace7")
+			search := bleve.NewSearchRequest(query)
+			log.Printf("index %v\n", index)
+			searchResults, err := index.Search(search)
+			if err != nil {
+				log.Printf("index search err %s\n", err)
+			}
+			log.Printf("results %s\n", searchResults.Hits)
 		}
 	}()
 
 	log.Printf("Listening on %s...\n", addr)
-	smtpd.ListenAndServe(addr, handler(mailHandler), "MyServerApp", "")
-
-}
-
-func (fn handler) HandleMessage(origin net.Addr, from string, to []string, data []byte) {
-
-	if err := fn(origin, from, to, data); err != nil {
-		log.Println(err)
-	}
-
-}
-
-func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
-	var err error
-	// Execute several commands within a read-write transaction.
-	err = db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(to[0]))
-		if err != nil {
-			return err
-		}
-		if err := b.Put([]byte(time.Now().Format(time.RFC3339)), data); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	if err != nil {
-		return err
-	}
-
-	var msg *mail.Message
-	msg, err = mail.ReadMessage(bytes.NewReader(data))
-	if err != nil {
-		return err
-	}
-	subject := msg.Header.Get("Subject")
-	log.Printf("Received mail from %s for %s with subject %s", from, to[0], subject)
-
-	return nil
+	smtpd.ListenAndServe(addr, handler(mailHandler), appName, "")
 }
