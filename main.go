@@ -12,9 +12,11 @@ import (
 )
 
 var db *bolt.DB
-var addr string = "127.0.0.1:2525"
+var mailAddr string = "127.0.0.1:2525"
+var httpAddr string = "127.0.0.1:8080"
 var index bleve.Index
 var appName string = "icemail"
+var staticPath string = "static"
 
 func main() {
 	var err error
@@ -37,37 +39,44 @@ func main() {
 		}
 	}
 
-	go func() {
+	go outputStats()
+	go httpServer()
 
-		for {
-			// Wait for 10s.
-			time.Sleep(10 * time.Second)
+	log.Printf("Mail server listening on %s...\n", mailAddr)
+	smtpd.ListenAndServe(mailAddr, handler(mailHandler), appName, "")
+}
 
-			// Grab the current stats and diff them.
-			stats := db.Stats()
-			// Encode stats to JSON and print to STDERR.
-			json.NewEncoder(os.Stderr).Encode(stats)
+func outputStats() {
+	for {
+		// Wait for 10s.
+		time.Sleep(10 * time.Second)
 
-			if err := db.View(func(tx *bolt.Tx) error {
-				buckets := 0
-				keys := 0
-				err := tx.ForEach(func(name []byte, b *bolt.Bucket) error {
-					buckets++
-					c := b.Cursor()
-					for k, _ := c.First(); k != nil; k, _ = c.Next() {
-						keys++
-					}
-					return nil
-				})
-				if err != nil {
-					return err
+		// Grab the current stats and diff them.
+		stats := db.Stats()
+		// Encode stats to JSON and print to STDERR.
+		json.NewEncoder(os.Stderr).Encode(stats)
+
+		if err := db.View(func(tx *bolt.Tx) error {
+			buckets := 0
+			keys := 0
+			err := tx.ForEach(func(name []byte, b *bolt.Bucket) error {
+				buckets++
+				c := b.Cursor()
+				for k, _ := c.First(); k != nil; k, _ = c.Next() {
+					keys++
 				}
-				log.Printf("buckets %d keys %d\n", buckets, keys)
 				return nil
-			}); err != nil {
-				log.Printf("bolt view err %s\n", err)
+			})
+			if err != nil {
+				return err
 			}
+			log.Printf("buckets %d keys %d\n", buckets, keys)
+			return nil
+		}); err != nil {
+			log.Printf("bolt view err %s\n", err)
+		}
 
+		/*
 			// search for some text
 			query := bleve.NewMatchQuery("pace7")
 			search := bleve.NewSearchRequest(query)
@@ -77,9 +86,6 @@ func main() {
 				log.Printf("index search err %s\n", err)
 			}
 			log.Printf("results %s\n", searchResults.Hits)
-		}
-	}()
-
-	log.Printf("Listening on %s...\n", addr)
-	smtpd.ListenAndServe(addr, handler(mailHandler), appName, "")
+		*/
+	}
 }
