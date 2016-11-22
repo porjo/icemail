@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/blevesearch/bleve"
 	bleveHttp "github.com/blevesearch/bleve/http"
@@ -27,37 +28,10 @@ func httpServer() {
 	listFieldsHandler := bleveHttp.NewListFieldsHandler(appName)
 	router.Handle("/api/fields", listFieldsHandler).Methods("GET")
 
-	debugHandler := bleveHttp.NewDebugDocumentHandler(appName)
-	debugHandler.DocIDLookup = docIDLookup
-	router.Handle("/api/debug/{docID}", debugHandler).Methods("GET")
-
 	// start the HTTP server
 	http.Handle("/", router)
 	log.Printf("HTTP Server listening on %v", httpAddr)
 	log.Fatal(http.ListenAndServe(httpAddr, nil))
-}
-
-func docIDLookup(req *http.Request) string {
-	return muxVariableLookup(req, "docID")
-}
-
-func muxVariableLookup(req *http.Request, name string) string {
-	return mux.Vars(req)[name]
-}
-
-type myFileHandler struct {
-	h http.Handler
-}
-
-func (mfh myFileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	mfh.h.ServeHTTP(w, r)
-}
-
-func RewriteURL(to string, h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.URL.Path = to
-		h.ServeHTTP(w, r)
-	})
 }
 
 func staticFileRouter() *mux.Router {
@@ -65,20 +39,7 @@ func staticFileRouter() *mux.Router {
 	r.StrictSlash(true)
 
 	// static
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/",
-		myFileHandler{http.FileServer(http.Dir(staticPath))}))
-
-	// application pages
-	appPages := []string{
-		"/overview",
-		"/search",
-	}
-
-	for _, p := range appPages {
-		// if you try to use index.html it will redirect...poorly
-		r.PathPrefix(p).Handler(RewriteURL("/",
-			http.FileServer(http.Dir(staticPath))))
-	}
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(staticPath))))
 
 	r.Handle("/", http.RedirectHandler("/static/index.html", 302))
 
@@ -89,7 +50,6 @@ func staticFileRouter() *mux.Router {
 type SearchHandler struct{}
 
 func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-
 	// read the request body
 	requestBody, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -125,8 +85,14 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	mailIDs := []int{}
+	for _, hit := range searchResponse.Hits {
+		id, _ := strconv.Atoi(hit.ID)
+		mailIDs = append(mailIDs, id)
+	}
+
 	// encode the response
-	mustEncode(w, searchResponse)
+	mustEncode(w, mailIDs)
 }
 
 func mustEncode(w io.Writer, i interface{}) {

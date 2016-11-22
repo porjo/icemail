@@ -43,7 +43,7 @@ func main() {
 	go httpServer()
 
 	log.Printf("Mail server listening on %s...\n", mailAddr)
-	smtpd.ListenAndServe(mailAddr, handler(mailHandler), appName, "")
+	smtpd.ListenAndServe(mailAddr, mailHandler(handleMessage), appName, "")
 }
 
 func outputStats() {
@@ -75,17 +75,5 @@ func outputStats() {
 		}); err != nil {
 			log.Printf("bolt view err %s\n", err)
 		}
-
-		/*
-			// search for some text
-			query := bleve.NewMatchQuery("pace7")
-			search := bleve.NewSearchRequest(query)
-			log.Printf("index %v\n", index)
-			searchResults, err := index.Search(search)
-			if err != nil {
-				log.Printf("index search err %s\n", err)
-			}
-			log.Printf("results %s\n", searchResults.Hits)
-		*/
 	}
 }

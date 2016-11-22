@@ -11,15 +11,15 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-type handler func(net.Addr, string, []string, []byte) error
+type mailHandler func(net.Addr, string, []string, []byte) error
 
-func (fn handler) HandleMessage(origin net.Addr, from string, to []string, data []byte) {
+func (fn mailHandler) HandleMessage(origin net.Addr, from string, to []string, data []byte) {
 	if err := fn(origin, from, to, data); err != nil {
 		log.Println(err)
 	}
 }
 
-func mailHandler(origin net.Addr, from string, to []string, data []byte) error {
+func handleMessage(origin net.Addr, from string, to []string, data []byte) error {
 	var err error
 
 	var msg *mail.Message
