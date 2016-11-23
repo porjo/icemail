@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,10 +23,10 @@ type SearchHandler struct{}
 type ListHandler struct{}
 
 type ListRequest struct {
+	// the mail ID to start listing from
+	StartID uint64
 	// the maximum number of messages to list
 	Limit int
-	// the mail ID to start listing from (+1)
-	StartID uint64
 }
 
 func httpServer() {
@@ -116,42 +117,40 @@ func (h *ListHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	headers := []mail.Header{}
+	headers := make(map[uint64]mail.Header)
 	err = db.View(func(tx *bolt.Tx) error {
 
 		b := tx.Bucket([]byte(messageBucket))
 
+		addHeader := func(headers map[uint64]mail.Header, k, v []byte) error {
+			idx := binary.BigEndian.Uint64(k)
+			msg, err := mail.ReadMessage(bytes.NewReader(v))
+			if err != nil {
+				return err
+			}
+			headers[idx] = msg.Header
+			return nil
+		}
+
+		c := b.Cursor()
 		if listRequest.StartID > 0 {
-			c := b.Cursor()
 			startID := itob(listRequest.StartID)
 			for k, v := c.Seek(startID); k != nil; k, v = c.Next() {
-				if bytes.Compare(k, startID) == 0 {
-					continue
-				}
-				msg, err := mail.ReadMessage(bytes.NewReader(v))
-				if err != nil {
-					return err
-				}
 				if listRequest.Limit > 0 && len(headers) == listRequest.Limit {
 					break
 				}
-				headers = append(headers, msg.Header)
-			}
-		} else {
-
-			err := b.ForEach(func(k, v []byte) error {
-				msg, err := mail.ReadMessage(bytes.NewReader(v))
-				if err != nil {
+				if err = addHeader(headers, k, v); err != nil {
 					return err
 				}
+			}
+		} else {
+			for k, v := c.First(); k != nil; k, v = c.Next() {
 				if listRequest.Limit > 0 && len(headers) == listRequest.Limit {
-					return nil
+					break
 				}
-				headers = append(headers, msg.Header)
-				return nil
-			})
-			if err != nil {
-				return err
+				if err = addHeader(headers, k, v); err != nil {
+					return err
+				}
 			}
 		}
 		return nil
