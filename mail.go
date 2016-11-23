@@ -30,7 +30,7 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 
 	// Execute several commands within a read-write transaction.
 	err = db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte("messages"))
+		b, err := tx.CreateBucketIfNotExists([]byte(messageBucket))
 		if err != nil {
 			return err
 		}

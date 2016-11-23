@@ -17,6 +17,7 @@ var httpAddr string = "127.0.0.1:8080"
 var index bleve.Index
 var appName string = "icemail"
 var staticPath string = "static"
+var messageBucket string = "messages"
 
 func main() {
 	var err error
