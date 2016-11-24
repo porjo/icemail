@@ -30,7 +30,6 @@ type ListRequest struct {
 }
 
 func httpServer() {
-
 	// create a router to serve static files
 	router := staticFileRouter()
 
