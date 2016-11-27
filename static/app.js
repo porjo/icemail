@@ -1,21 +1,23 @@
 var apiURL = '//localhost:8080/api';
 
-var app = new Vue({
-	el: '#app',
-	data: {
-		headers: null
-	},
+$(function() {
+	var app = new Vue({
+		el: '#app',
+		data: {
+			headers: null,
+		},
 
-	created: function () {
-		this.fetchData()
-	},
+		created: function () {
+			this.fetchData()
+		},
 
-	methods: {
-		fetchData: function () {
-			$.post(apiURL + '/list', '{}', function(data) {
-				console.log(data);
-				self.headers = data;
-			});
+		methods: {
+			fetchData: function () {
+				var self = this;
+				$.post(apiURL + '/list', '{}', function(data) {
+					self.headers = data;
+				});
+			}
 		}
-	}
-})
+	});
+});
