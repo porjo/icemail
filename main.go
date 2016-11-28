@@ -40,7 +40,7 @@ func main() {
 		}
 	}
 
-	go outputStats()
+	//go outputStats()
 	go httpServer()
 
 	log.Printf("Mail server listening on %s...\n", mailAddr)

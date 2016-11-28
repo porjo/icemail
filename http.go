@@ -10,7 +10,9 @@ import (
 	"log"
 	"net/http"
 	"net/mail"
+	"sort"
 	"strconv"
+	"time"
 
 	"github.com/blevesearch/bleve"
 	bleveHttp "github.com/blevesearch/bleve/http"
@@ -27,6 +29,18 @@ type ListRequest struct {
 	StartID uint64
 	// the maximum number of messages to list
 	Limit int
+}
+
+type SearchRequest struct {
+	Query string
+	// the maximum number of messages to list
+	Limit     int
+	Locations []string
+}
+
+type MsgSummary struct {
+	ID     uint64
+	Header mail.Header
 }
 
 func httpServer() {
@@ -68,15 +82,16 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// parse the request
-	var searchRequest bleve.SearchRequest
+	var searchRequest SearchRequest
 	err = json.Unmarshal(requestBody, &searchRequest)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("error parsing query: %v", err), 400)
 		return
 	}
 
+	bSearchRequest := bleve.NewSearchRequest(query.NewQueryStringQuery(searchRequest.Query))
 	// validate the query
-	if srqv, ok := searchRequest.Query.(query.ValidatableQuery); ok {
+	if srqv, ok := bSearchRequest.Query.(query.ValidatableQuery); ok {
 		err = srqv.Validate()
 		if err != nil {
 			http.Error(w, fmt.Sprintf("error validating query: %v", err), 400)
@@ -85,20 +100,56 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// execute the query
-	searchResponse, err := index.Search(&searchRequest)
+	searchResult, err := index.Search(bSearchRequest)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("error executing query: %v", err), 500)
 		return
 	}
 
-	mailIDs := []int{}
-	for _, hit := range searchResponse.Hits {
-		id, _ := strconv.Atoi(hit.ID)
-		mailIDs = append(mailIDs, id)
+	headers := make(TimeSlice, 0)
+	err = db.View(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte(messageBucket))
+
+		for _, hit := range searchResult.Hits {
+			if len(searchRequest.Locations) > 0 {
+				found := false
+				for _, inLoc := range searchRequest.Locations {
+					for outLoc, _ := range hit.Locations {
+						if inLoc == outLoc {
+							found = true
+							goto locBreak
+						}
+					}
+				}
+			locBreak:
+				if !found {
+					return nil
+				}
+			}
+
+			idx, err := strconv.ParseUint(hit.ID, 10, 64)
+			v := b.Get(itob(idx))
+			if searchRequest.Limit > 0 && len(headers) == searchRequest.Limit {
+				break
+			}
+			msg, err := mail.ReadMessage(bytes.NewReader(v))
+			if err != nil {
+				return err
+			}
+			lr := MsgSummary{idx, msg.Header}
+			headers = append(headers, lr)
+		}
+		return nil
+	})
+	if err != nil {
+		http.Error(w, fmt.Sprintf("error listing messages: %v", err), 500)
+		return
 	}
 
+	sort.Sort(headers)
 	// encode the response
-	mustEncode(w, mailIDs)
+	mustEncode(w, headers)
 }
 
 func (h *ListHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -110,26 +161,18 @@ func (h *ListHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var listRequest ListRequest
-	err = json.Unmarshal(requestBody, &listRequest)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("error parsing query: %v", err), 400)
-		return
+	if len(requestBody) > 0 {
+		err = json.Unmarshal(requestBody, &listRequest)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("error parsing query: %v", err), 400)
+			return
+		}
 	}
 
-	headers := make(map[uint64]mail.Header)
+	headers := make(TimeSlice, 0)
 	err = db.View(func(tx *bolt.Tx) error {
 
 		b := tx.Bucket([]byte(messageBucket))
-
-		addHeader := func(headers map[uint64]mail.Header, k, v []byte) error {
-			idx := binary.BigEndian.Uint64(k)
-			msg, err := mail.ReadMessage(bytes.NewReader(v))
-			if err != nil {
-				return err
-			}
-			headers[idx] = msg.Header
-			return nil
-		}
 
 		c := b.Cursor()
 		if listRequest.StartID > 0 {
@@ -138,26 +181,36 @@ func (h *ListHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				if listRequest.Limit > 0 && len(headers) == listRequest.Limit {
 					break
 				}
-				if err = addHeader(headers, k, v); err != nil {
+				msg, err := mail.ReadMessage(bytes.NewReader(v))
+				if err != nil {
 					return err
 				}
+				idx := binary.BigEndian.Uint64(k)
+				lr := MsgSummary{idx, msg.Header}
+				headers = append(headers, lr)
 			}
 		} else {
 			for k, v := c.First(); k != nil; k, v = c.Next() {
 				if listRequest.Limit > 0 && len(headers) == listRequest.Limit {
 					break
 				}
-				if err = addHeader(headers, k, v); err != nil {
+				msg, err := mail.ReadMessage(bytes.NewReader(v))
+				if err != nil {
 					return err
 				}
+				idx := binary.BigEndian.Uint64(k)
+				lr := MsgSummary{idx, msg.Header}
+				headers = append(headers, lr)
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		http.Error(w, fmt.Sprintf("error listing messages: %v", err), 400)
+		http.Error(w, fmt.Sprintf("error listing messages: %v", err), 500)
 		return
 	}
+
+	sort.Sort(headers)
 
 	// encode the response
 	mustEncode(w, headers)
@@ -173,4 +226,19 @@ func mustEncode(w io.Writer, i interface{}) {
 	if err := e.Encode(i); err != nil {
 		panic(err)
 	}
+}
+
+type TimeSlice []MsgSummary
+
+func (s TimeSlice) Len() int {
+	return len(s)
+}
+func (s TimeSlice) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+func (s TimeSlice) Less(i, j int) bool {
+	iDate, _ := time.Parse(time.RFC1123Z, s[i].Header.Get("Date"))
+	jDate, _ := time.Parse(time.RFC1123Z, s[j].Header.Get("Date"))
+
+	return iDate.After(jDate)
 }

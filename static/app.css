@@ -1,0 +1,47 @@
+body {
+	font-family: Helvetica, Arial, Sans-Serif;
+	color: #333;
+}
+
+.message_list {
+	width: 100%;
+}
+
+.message_list th {
+	color: #fff;
+	background-color: #888;
+	padding: 5px 0;
+}
+
+.message_list tr {
+	background-color: #F2F2F2;
+	cursor: pointer;
+}
+
+.message_list tr:nth-child(odd) {
+	background-color: #EEFFFF;
+}
+
+.message_list tr:hover {
+	background-color: #FFF1DA;
+}
+
+#logo {
+	float: right;
+	font-size: 1.5em;
+	font-weight: bold;
+}
+
+.results_stats {
+	margin-top: 20px;
+	color: #777;
+}
+
+#search_bar {
+	margin: 0 auto;
+	width: 600px;
+}
+
+#search_bar input[type=search] {
+	padding: 10px;
+}

@@ -2,16 +2,29 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<title>Title of the document</title>
+		<title>IceMail</title>
+		<link rel="stylesheet" type="text/css" href="app.css">
 	</head>
-
 	<body>
+		<div id='logo'>IceMail <img src="icemail_logo.png" /></div>
 		<div id="app">
-			<ol>
-				<li v-for="(header, index) in headers">
-					{{ header }}
-				</li>
-			</ol>
+			<div id='search_bar'>
+				<input type="search" size=50 @keyup.enter="search()" v-model="query" placeholder="search keyword">
+				<button @click="search()">Search</button>
+			</div>
+			<div class='results_stats' v-if="headers">{{ headers.length }} result(s)</div>
+			<table class='message_list'>
+				<th>Subject</th>
+				<th>From</th>
+				<th>To</th>
+				<th>Date</th>
+				<tr v-for="(header, index) in headers">
+					<td>{{ header.Header.Subject[0] }}</td>
+					<td>{{ header.Header.From[0] }}</td>
+					<td>{{ header.Header.To[0] }}</td>
+					<td>{{ header.Header.Date[0] }}</td>
+				</tr>
+			</table>
 		</div>
 		<script src="//code.jquery.com/jquery-3.1.1.min.js"></script>
 		<script src="//unpkg.com/vue/dist/vue.js"></script>
