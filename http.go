@@ -36,6 +36,7 @@ type SearchRequest struct {
 	// the maximum number of messages to list
 	Limit     int
 	Locations []string
+	Days      int
 }
 
 type MsgSummary struct {
@@ -233,9 +234,11 @@ type TimeSlice []MsgSummary
 func (s TimeSlice) Len() int {
 	return len(s)
 }
+
 func (s TimeSlice) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
+
 func (s TimeSlice) Less(i, j int) bool {
 	iDate, _ := time.Parse(time.RFC1123Z, s[i].Header.Get("Date"))
 	jDate, _ := time.Parse(time.RFC1123Z, s[j].Header.Get("Date"))

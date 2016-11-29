@@ -45,3 +45,14 @@ body {
 #search_bar input[type=search] {
 	padding: 10px;
 }
+
+#search_options {
+	display: none;
+}
+
+#search_options_toggle {
+	cursor: pointer;
+	font-size: 0.8em;
+	margin: 3px 0;
+	display: inline-block;
+}

@@ -1,11 +1,20 @@
 var apiURL = '//localhost:8080/api';
 
+var fields = [
+	"From",
+	"To",
+	"Subject"
+];
+
 $(function() {
 	var app = new Vue({
 		el: '#app',
 		data: {
 			query: "",
 			headers: null,
+			fields: fields,
+			searchFields: fields,
+			searchDays: 0
 		},
 
 		created: function () {
@@ -21,13 +30,21 @@ $(function() {
 				});
 			},
 
+			toggleSearchOptions: function() {
+				$('#search_options').slideToggle();
+			},
+
 			search: function() {
 				if (this.query == ''){
 					this.fetchData();
 					return;
 				}
 				var self = this;
-				var data = {query: this.query};
+				var data = {
+					query: this.query,
+					locations: this.searchFields,
+					days: this.searchDays
+				};
 
 				$.ajax({
 					url: apiURL + '/search',
