@@ -33,15 +33,9 @@ func main() {
 	index, err = bleve.Open(appName + ".bleve")
 	if err != nil {
 		log.Printf("Creating new search index...")
+
 		mapping := bleve.NewIndexMapping()
-
-		docMapping := bleve.NewDocumentMapping()
-		dateFieldMapping := bleve.NewDateTimeFieldMapping()
-		dateFieldMapping.DateFormat = dateTimeParserName
-		docMapping.AddFieldMappingsAt("Date", dateFieldMapping)
-
-		mapping.AddDocumentMapping(appName, docMapping)
-
+		//mapping := buildIndexMapping()
 		index, err = bleve.New(appName+".bleve", mapping)
 		if err != nil {
 			log.Fatal(err)

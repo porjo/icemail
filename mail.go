@@ -11,6 +11,11 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+type bleveDoc struct {
+	Type string
+	Data mail.Header
+}
+
 type mailHandler func(net.Addr, string, []string, []byte) error
 
 func (fn mailHandler) HandleMessage(origin net.Addr, from string, to []string, data []byte) {
@@ -40,7 +45,10 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 			return err
 		}
 
-		if err := index.Index(strconv.FormatUint(id, 10), msg.Header); err != nil {
+		//doc := bleveDoc{"header", msg.Header}
+		doc := msg.Header
+
+		if err := index.Index(strconv.FormatUint(id, 10), doc); err != nil {
 			return err
 		}
 
