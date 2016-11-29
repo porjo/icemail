@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/blevesearch/bleve/analysis"
@@ -15,6 +16,7 @@ var dateTimeParserLayouts = []string{
 }
 
 func DateTimeParserConstructor(config map[string]interface{}, cache *registry.Cache) (analysis.DateTimeParser, error) {
+	fmt.Println("time parser called")
 	return flexible.New(dateTimeParserLayouts), nil
 }
 

@@ -113,6 +113,7 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		b := tx.Bucket([]byte(messageBucket))
 
 		for _, hit := range searchResult.Hits {
+			fmt.Printf("result fields %+v", hit.Fields)
 			if len(searchRequest.Locations) > 0 {
 				found := false
 				for _, inLoc := range searchRequest.Locations {
