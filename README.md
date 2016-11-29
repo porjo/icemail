@@ -1,5 +1,7 @@
 # Icemail
 
+**Work in progress - not ready for use**
+
 Email catcher for development environments. Solves the problem of test emails becoming a nuisance to developers and customers.
 
 - acts as a 'smart relay' which by default stores all incoming mail rather than relaying it.
