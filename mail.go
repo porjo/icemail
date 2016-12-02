@@ -45,9 +45,7 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 			return err
 		}
 
-		//doc := bleveDoc{"header", msg.Header}
-		doc := msg.Header
-
+		doc := bleveDoc{"header", msg.Header}
 		if err := index.Index(strconv.FormatUint(id, 10), doc); err != nil {
 			return err
 		}

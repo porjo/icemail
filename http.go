@@ -36,7 +36,8 @@ type SearchRequest struct {
 	// the maximum number of messages to list
 	Limit     int
 	Locations []string
-	Days      int
+	StartTime time.Time
+	EndTime   time.Time
 }
 
 type MsgSummary struct {
@@ -90,7 +91,25 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	bSearchRequest := bleve.NewSearchRequest(query.NewQueryStringQuery(searchRequest.Query))
+	if searchRequest.Query == "" {
+		http.Error(w, fmt.Sprintf("query string cannot be empty"), 400)
+		return
+	}
+
+	var bQuery query.Query
+	queryQuery := query.NewQueryStringQuery(searchRequest.Query)
+	if !searchRequest.StartTime.IsZero() || !searchRequest.EndTime.IsZero() {
+		dateTimeQuery := query.NewDateRangeQuery(
+			searchRequest.StartTime,
+			searchRequest.EndTime,
+		)
+		bQuery = query.NewConjunctionQuery([]query.Query{queryQuery, dateTimeQuery})
+	} else {
+		bQuery = queryQuery
+	}
+
+	bSearchRequest := bleve.NewSearchRequest(bQuery)
+
 	// validate the query
 	if srqv, ok := bSearchRequest.Query.(query.ValidatableQuery); ok {
 		err = srqv.Validate()
@@ -113,7 +132,7 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		b := tx.Bucket([]byte(messageBucket))
 
 		for _, hit := range searchResult.Hits {
-			//fmt.Printf("result fields %+v\n", hit.Fields)
+			fmt.Printf("result fields %+v\n", hit.Fields)
 			if len(searchRequest.Locations) > 0 {
 				found := false
 				for _, inLoc := range searchRequest.Locations {
@@ -241,8 +260,18 @@ func (s TimeSlice) Swap(i, j int) {
 }
 
 func (s TimeSlice) Less(i, j int) bool {
-	iDate, _ := time.Parse(time.RFC1123Z, s[i].Header.Get("Date"))
-	jDate, _ := time.Parse(time.RFC1123Z, s[j].Header.Get("Date"))
+	var err error
+	var iDate, jDate time.Time
+
+	iDate, err = time.Parse(RFC1123ZnoPadDay, s[i].Header.Get("Date"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	jDate, err = time.Parse(RFC1123ZnoPadDay, s[j].Header.Get("Date"))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return iDate.After(jDate)
 }

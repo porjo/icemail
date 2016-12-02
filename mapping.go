@@ -1,24 +1,22 @@
 package main
 
 import (
-	"time"
-
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis"
-	"github.com/blevesearch/bleve/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/analysis/datetime/flexible"
 	"github.com/blevesearch/bleve/mapping"
 	"github.com/blevesearch/bleve/registry"
 )
 
 const dateTimeParserName = "dateTimeParser"
+const RFC1123ZnoPadDay = "Mon, _2 Jan 2006 15:04:05 -0700"
 
 func init() {
 	registry.RegisterDateTimeParser(dateTimeParserName, DateTimeParserConstructor)
 }
 
 var dateTimeParserLayouts = []string{
-	time.RFC1123Z,
+	RFC1123ZnoPadDay,
 }
 
 func DateTimeParserConstructor(config map[string]interface{}, cache *registry.Cache) (analysis.DateTimeParser, error) {
@@ -28,21 +26,15 @@ func DateTimeParserConstructor(config map[string]interface{}, cache *registry.Ca
 func buildIndexMapping() mapping.IndexMapping {
 	mapping := bleve.NewIndexMapping()
 
-	dateFieldMapping := bleve.NewDateTimeFieldMapping()
-	dateFieldMapping.DateFormat = dateTimeParserName
-
-	keywordFieldMapping := bleve.NewTextFieldMapping()
-	keywordFieldMapping.Analyzer = keyword.Name
-
 	docMapping := bleve.NewDocumentMapping()
-	docMapping.AddFieldMappingsAt("Type", keywordFieldMapping)
+
+	typeFieldMapping := bleve.NewTextFieldMapping()
+	docMapping.AddFieldMappingsAt("Type", typeFieldMapping)
 
 	headerMapping := bleve.NewDocumentMapping()
-	headerMapping.AddFieldMappingsAt("Subject", keywordFieldMapping)
-	headerMapping.AddFieldMappingsAt("From", keywordFieldMapping)
-	headerMapping.AddFieldMappingsAt("To", keywordFieldMapping)
+	dateFieldMapping := bleve.NewDateTimeFieldMapping()
+	dateFieldMapping.DateFormat = dateTimeParserName
 	headerMapping.AddFieldMappingsAt("Date", dateFieldMapping)
-
 	docMapping.AddSubDocumentMapping("Data", headerMapping)
 
 	mapping.AddDocumentMapping("header", docMapping)
