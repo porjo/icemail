@@ -3,17 +3,17 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"log"
 	"net"
 	"net/mail"
-	"strconv"
-
-	"github.com/boltdb/bolt"
+	"time"
 )
 
 type bleveDoc struct {
-	Type string
-	Data mail.Header
+	Type   string
+	Header mail.Header
+	Data   []byte
 }
 
 type mailHandler func(net.Addr, string, []string, []byte) error
@@ -33,27 +33,10 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 		return err
 	}
 
-	// Execute several commands within a read-write transaction.
-	err = db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(messageBucket))
-		if err != nil {
-			return err
-		}
-		id, _ := b.NextSequence()
+	doc := bleveDoc{"message", msg.Header, data}
 
-		if err := b.Put(itob(id), data); err != nil {
-			return err
-		}
-
-		doc := bleveDoc{"header", msg.Header}
-		if err := index.Index(strconv.FormatUint(id, 10), doc); err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	if err != nil {
+	id := fmt.Sprintf("%s", time.Now().UnixNano())
+	if err := index.Index(id, doc); err != nil {
 		return err
 	}
 

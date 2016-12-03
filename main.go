@@ -1,17 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
-	"os"
-	"time"
 
 	"github.com/blevesearch/bleve"
-	"github.com/boltdb/bolt"
 	"github.com/porjo/icemail/smtpd"
 )
 
-var db *bolt.DB
 var mailAddr string = "127.0.0.1:2525"
 var httpAddr string = "127.0.0.1:8080"
 var index bleve.Index
@@ -21,13 +16,6 @@ var messageBucket string = "messages"
 
 func main() {
 	var err error
-	// Open the my.db data file in your current directory.
-	// It will be created if it doesn't exist.
-	db, err = bolt.Open("my.db", 0600, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
 
 	// try opening index, otherwise try creating new
 	index, err = bleve.Open(appName + ".bleve")
@@ -48,6 +36,7 @@ func main() {
 	smtpd.ListenAndServe(mailAddr, mailHandler(handleMessage), appName, "")
 }
 
+/*
 func outputStats() {
 	for {
 		// Wait for 10s.
@@ -79,3 +68,4 @@ func outputStats() {
 		}
 	}
 }
+*/

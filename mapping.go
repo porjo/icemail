@@ -32,9 +32,12 @@ func buildIndexMapping() mapping.IndexMapping {
 	dateFieldMapping := bleve.NewDateTimeFieldMapping()
 	dateFieldMapping.DateFormat = dateTimeParserName
 	headerMapping.AddFieldMappingsAt("Date", dateFieldMapping)
-	docMapping.AddSubDocumentMapping("Data", headerMapping)
+	dataFieldMapping := bleve.NewTextFieldMapping()
+	dataFieldMapping.Index = false
+	headerMapping.AddFieldMappingsAt("Data", dataFieldMapping)
+	docMapping.AddSubDocumentMapping("Header", headerMapping)
 
-	mapping.AddDocumentMapping("header", docMapping)
+	mapping.AddDocumentMapping("message", docMapping)
 	mapping.TypeField = "Type"
 
 	return mapping
