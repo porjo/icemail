@@ -63,3 +63,15 @@ body {
 [v-cloak] {
 	display: none;
 }
+
+.label {
+	display: inline-block;
+	font-weight: bold;
+	width: 50%;
+	text-align: right;
+	margin-right: 10px;
+}
+
+.value {
+	display: inline-block;
+}

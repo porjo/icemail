@@ -10,12 +10,6 @@ import (
 	"time"
 )
 
-type bleveDoc struct {
-	Type   string
-	Header mail.Header
-	Data   []byte
-}
-
 type mailHandler func(net.Addr, string, []string, []byte) error
 
 func (fn mailHandler) HandleMessage(origin net.Addr, from string, to []string, data []byte) {
@@ -33,9 +27,9 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 		return err
 	}
 
-	doc := bleveDoc{"message", msg.Header, data}
+	doc := bleveDoc{"message", msg.Header, string(data)}
 
-	id := fmt.Sprintf("%s", time.Now().UnixNano())
+	id := fmt.Sprintf("%v", time.Now().UnixNano())
 	if err := index.Index(id, doc); err != nil {
 		return err
 	}

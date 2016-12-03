@@ -1,12 +1,24 @@
 package main
 
 import (
+	"net/mail"
+
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis"
 	"github.com/blevesearch/bleve/analysis/datetime/flexible"
 	"github.com/blevesearch/bleve/mapping"
 	"github.com/blevesearch/bleve/registry"
 )
+
+type bleveDoc struct {
+	Type   string
+	Header mail.Header
+	// store raw email data
+	Data string
+}
+
+// locationsBase is prepended to locations being filtered on
+const locationsBase = "Header."
 
 const dateTimeParserName = "dateTimeParser"
 const RFC1123ZnoPadDay = "Mon, _2 Jan 2006 15:04:05 -0700"
