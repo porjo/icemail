@@ -40,11 +40,17 @@ $(function() {
 					return;
 				}
 				var self = this;
+
 				var data = {
 					query: this.query,
 					locations: this.searchFields,
-					days: this.searchDays
 				};
+
+				if( this.searchDays > 0) {
+					var startTime = new Date();
+					startTime.setDate(startTime.getDate() - this.searchDays);
+					data.starttime = startTime.toISOString();
+				}
 
 				$.ajax({
 					url: apiURL + '/search',

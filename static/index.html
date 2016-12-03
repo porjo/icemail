@@ -12,18 +12,18 @@
 				<input type="search" size=50 @keyup.enter="search()" v-model="query" placeholder="search keyword">
 				<button @click="search()">Search</button>
 				<div id='search_options_toggle' @click="toggleSearchOptions()">Advanced Options</div>
-			</div>
-			<div id='search_options'>
-				<div id='search_options_fields'>
-					Search these fields:
-					<template v-for="field in fields">
-						<input type="checkbox" :value='field' v-model="searchFields">{{field}}
-					</template>
+				<div id='search_options'>
+					<div id='search_options_fields'>
+						Search these fields:
+						<template v-for="field in fields">
+							<input type="checkbox" :value='field' v-model="searchFields">{{field}}
+						</template>
 
-				</div>
-				<div id='search_options_time'>
-					Search this many days:
-					<input type="number" v-model="searchDays">
+					</div>
+					<div id='search_options_time'>
+						Search back this many days:
+						<input type="text" size=4 v-model="searchDays">&nbsp;(zero is unlimited)
+					</div>
 				</div>
 			</div>
 			<div class='results_stats' v-if="headers">{{ headers.length }} result(s)</div>

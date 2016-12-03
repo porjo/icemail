@@ -87,7 +87,7 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var searchRequest SearchRequest
 	err = json.Unmarshal(requestBody, &searchRequest)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("error parsing query: %v", err), 400)
+		http.Error(w, fmt.Sprintf("error parsing request: %v", err), 400)
 		return
 	}
 

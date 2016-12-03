@@ -48,6 +48,9 @@ body {
 
 #search_options {
 	display: none;
+	border: 1px solid #ddd;
+	padding: 5px;
+	font-size: 0.8em;
 }
 
 #search_options_toggle {
