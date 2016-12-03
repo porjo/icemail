@@ -56,3 +56,7 @@ body {
 	margin: 3px 0;
 	display: inline-block;
 }
+
+[v-cloak] {
+	display: none;
+}

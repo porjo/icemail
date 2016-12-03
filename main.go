@@ -34,8 +34,7 @@ func main() {
 	if err != nil {
 		log.Printf("Creating new search index...")
 
-		mapping := bleve.NewIndexMapping()
-		//mapping := buildIndexMapping()
+		mapping := buildIndexMapping()
 		index, err = bleve.New(appName+".bleve", mapping)
 		if err != nil {
 			log.Fatal(err)

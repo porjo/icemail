@@ -132,12 +132,11 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		b := tx.Bucket([]byte(messageBucket))
 
 		for _, hit := range searchResult.Hits {
-			fmt.Printf("result fields %+v\n", hit.Fields)
 			if len(searchRequest.Locations) > 0 {
 				found := false
 				for _, inLoc := range searchRequest.Locations {
 					for outLoc, _ := range hit.Locations {
-						if inLoc == outLoc {
+						if "Data."+inLoc == outLoc {
 							found = true
 							goto locBreak
 						}
@@ -265,12 +264,12 @@ func (s TimeSlice) Less(i, j int) bool {
 
 	iDate, err = time.Parse(RFC1123ZnoPadDay, s[i].Header.Get("Date"))
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	jDate, err = time.Parse(RFC1123ZnoPadDay, s[j].Header.Get("Date"))
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	return iDate.After(jDate)

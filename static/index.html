@@ -7,7 +7,7 @@
 	</head>
 	<body>
 		<div id='logo'>IceMail <img src="icemail_logo.png" /></div>
-		<div id="app">
+		<div id="app" v-cloak>
 			<div id='search_bar'>
 				<input type="search" size=50 @keyup.enter="search()" v-model="query" placeholder="search keyword">
 				<button @click="search()">Search</button>
