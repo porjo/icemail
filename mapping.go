@@ -38,15 +38,15 @@ func DateTimeParserConstructor(config map[string]interface{}, cache *registry.Ca
 func buildIndexMapping() mapping.IndexMapping {
 	mapping := bleve.NewIndexMapping()
 
-	docMapping := bleve.NewDocumentMapping()
-
 	headerMapping := bleve.NewDocumentMapping()
 	dateFieldMapping := bleve.NewDateTimeFieldMapping()
 	dateFieldMapping.DateFormat = dateTimeParserName
 	headerMapping.AddFieldMappingsAt("Date", dateFieldMapping)
+
+	docMapping := bleve.NewDocumentMapping()
 	dataFieldMapping := bleve.NewTextFieldMapping()
 	dataFieldMapping.Index = false
-	headerMapping.AddFieldMappingsAt("Data", dataFieldMapping)
+	docMapping.AddFieldMappingsAt("Data", dataFieldMapping)
 	docMapping.AddSubDocumentMapping("Header", headerMapping)
 
 	mapping.AddDocumentMapping("message", docMapping)

@@ -108,7 +108,7 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	bSearchRequest := bleve.NewSearchRequest(bQuery)
-	bSearchRequest.SortBy([]string{"-date"})
+	bSearchRequest.SortBy([]string{"-Header.Date"})
 	bSearchRequest.Fields = []string{"Data"}
 
 	// validate the query
@@ -137,7 +137,6 @@ func (h *SearchDocHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	docQuery := query.NewDocIDQuery([]string{docID})
 
 	bSearchRequest := bleve.NewSearchRequest(docQuery)
-	bSearchRequest.SortBy([]string{"-date"})
 	bSearchRequest.Fields = []string{"Data"}
 
 	var headers []EmailResult
@@ -168,7 +167,7 @@ func (h *ListHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	bQuery := bleve.NewMatchAllQuery()
 	bSearchRequest := bleve.NewSearchRequest(bQuery)
-	bSearchRequest.SortBy([]string{"-date"})
+	bSearchRequest.SortBy([]string{"-Header.Date"})
 	bSearchRequest.Fields = []string{"Data"}
 
 	var headers []EmailResult
