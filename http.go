@@ -37,10 +37,15 @@ type SearchRequest struct {
 	EndTime   time.Time
 }
 
-type EmailResult struct {
+type SearchResult struct {
+	Total  uint64
+	Emails []Email
+}
+
+type Email struct {
 	ID     string
 	Header mail.Header
-	Body   string
+	Body   string `json:"body,omitempty"`
 }
 
 func httpServer() {
@@ -51,10 +56,17 @@ func httpServer() {
 	bleveHttp.RegisterIndexName(appName, index)
 	//searchHandler := bleveHttp.NewSearchHandler(appName)
 	router.Handle("/api/search", &SearchHandler{}).Methods("POST")
-	router.Handle("/api/search/{DocID}", &SearchDocHandler{}).Methods("GET")
+	router.Handle("/api/search/{docID}", &SearchDocHandler{}).Methods("GET")
 	router.Handle("/api/list", &ListHandler{}).Methods("POST")
 	listFieldsHandler := bleveHttp.NewListFieldsHandler(appName)
 	router.Handle("/api/fields", listFieldsHandler).Methods("GET")
+	listIndexesHandler := bleveHttp.NewListIndexesHandler()
+	router.Handle("/api/indexes", listIndexesHandler).Methods("GET")
+	debugHandler := bleveHttp.NewDebugDocumentHandler(appName)
+	debugHandler.DocIDLookup = func(req *http.Request) string {
+		return mux.Vars(req)["docID"]
+	}
+	router.Handle("/api/debug/{docID}", debugHandler).Methods("GET")
 
 	// start the HTTP server
 	http.Handle("/", router)
@@ -120,32 +132,31 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	var headers []EmailResult
-	headers, err = DoSearch(searchRequest, bSearchRequest, false)
+	var result SearchResult
+	result, err = doSearch(searchRequest, bSearchRequest, false)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), 500)
 		return
 	}
-	mustEncode(w, headers)
+	mustEncode(w, result)
 }
 
 func (h *SearchDocHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var err error
-	vars := mux.Vars(req)
-	docID := vars["DocID"]
+	docID := mux.Vars(req)["docID"]
 
 	docQuery := query.NewDocIDQuery([]string{docID})
 
 	bSearchRequest := bleve.NewSearchRequest(docQuery)
 	bSearchRequest.Fields = []string{"Data"}
 
-	var headers []EmailResult
-	headers, err = DoSearch(SearchRequest{}, bSearchRequest, true)
+	var result SearchResult
+	result, err = doSearch(SearchRequest{}, bSearchRequest, true)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), 500)
 		return
 	}
-	mustEncode(w, headers)
+	mustEncode(w, result)
 }
 
 func (h *ListHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -169,25 +180,26 @@ func (h *ListHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	bSearchRequest := bleve.NewSearchRequest(bQuery)
 	bSearchRequest.SortBy([]string{"-Header.Date"})
 	bSearchRequest.Fields = []string{"Data"}
+	bSearchRequest.Size = 100 // defaults to 10
 
-	var headers []EmailResult
-	headers, err = DoSearch(searchRequest, bSearchRequest, false)
+	var result SearchResult
+	result, err = doSearch(searchRequest, bSearchRequest, false)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), 500)
 		return
 	}
 
-	// encode the response
-	mustEncode(w, headers)
+	mustEncode(w, result)
 }
 
-func DoSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody bool) ([]EmailResult, error) {
+func doSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody bool) (SearchResult, error) {
+	var hResult SearchResult
 	searchResult, err := index.Search(bRequest)
 	if err != nil {
-		return nil, fmt.Errorf("error executing query: %v", err)
+		return hResult, fmt.Errorf("error executing query: %v", err)
 	}
 
-	headers := make([]EmailResult, 0)
+	emails := make([]Email, 0)
 
 	for _, hit := range searchResult.Hits {
 		if len(hRequest.Locations) > 0 {
@@ -206,27 +218,29 @@ func DoSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody
 			}
 		}
 
-		if hRequest.Limit > 0 && len(headers) == hRequest.Limit {
+		if hRequest.Limit > 0 && len(emails) == hRequest.Limit {
 			break
 		}
 
 		if v, ok := hit.Fields["Data"].(string); ok {
 			msg, err := mail.ReadMessage(strings.NewReader(v))
 			if err != nil {
-				return nil, err
+				return hResult, err
 			}
 			body := ""
 			if includeBody {
 				body = v
 			}
-			lr := EmailResult{hit.ID, msg.Header, body}
-			headers = append(headers, lr)
+			lr := Email{hit.ID, msg.Header, body}
+			emails = append(emails, lr)
 		} else {
-			return nil, fmt.Errorf("error retrieving document")
+			return hResult, fmt.Errorf("error retrieving document")
 		}
 	}
 
-	return headers, nil
+	hResult.Total = searchResult.Total
+	hResult.Emails = emails
+	return hResult, nil
 }
 
 func mustEncode(w io.Writer, i interface{}) {

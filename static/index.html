@@ -28,17 +28,17 @@
 					</div>
 				</div>
 			</div>
-			<div class='results_stats' v-if="headers">{{ headers.length }} result(s)</div>
-			<table class='message_list' v-if="headers.length > 0">
+			<div class='results_stats'>{{ result.emails.length }} result(s) of {{result.total}}</div>
+			<table class='message_list' v-if="result.emails.length > 0">
 				<th>Subject</th>
 				<th>From</th>
 				<th>To</th>
 				<th>Date</th>
-				<tr v-for="(header, index) in headers">
-					<td>{{ header.Header.Subject[0] }}</td>
-					<td>{{ header.Header.From[0] }}</td>
-					<td>{{ header.Header.To[0] }}</td>
-					<td>{{ header.Header.Date[0] }}</td>
+				<tr v-for="(email, index) in result.emails">
+					<td>{{ email.Header.Subject[0] }}</td>
+					<td>{{ email.Header.From[0] }}</td>
+					<td>{{ email.Header.To[0] }}</td>
+					<td>{{ email.Header.Date[0] }}</td>
 				</tr>
 			</table>
 		</div>

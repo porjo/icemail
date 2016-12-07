@@ -11,7 +11,10 @@ $(function() {
 		el: '#app',
 		data: {
 			query: "",
-			headers: null,
+			result: {
+				emails: [],
+				total: 0
+			},
 			fields: fields,
 			searchFields: fields,
 			searchDays: 0
@@ -26,7 +29,8 @@ $(function() {
 				var self = this;
 				$.post(apiURL + '/list', '{}', function(data) {
 					cleanData(data);
-					self.headers = data;
+					self.result.emails = data.Emails;
+					self.result.total = data.Total
 				});
 			},
 
@@ -60,7 +64,8 @@ $(function() {
 					dataType: 'json',
 					success: function(data) {
 						cleanData(data);
-						self.headers = data;
+						self.result.emails = data.Emails;
+						self.result.total = data.Total
 					}
 				});
 			}
@@ -69,7 +74,7 @@ $(function() {
 });
 
 function cleanData(data) {
-	$.each(data, function(k,v) {
+	$.each(data.emails, function(k,v) {
 		if( typeof v.Header.Date === 'undefined' )
 			v.Header.Date = '';
 		if( typeof v.Header.From === 'undefined' )
