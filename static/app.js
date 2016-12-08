@@ -26,7 +26,7 @@ $(function() {
 		},
 
 		created: function () {
-			this.fetchData()
+			this.searchMsg()
 		},
 
 		methods: {
@@ -46,24 +46,11 @@ $(function() {
 				});
 			},
 
-			fetchData: function () {
-				var self = this;
-				$.post(apiURL + '/list', '{}', function(data) {
-					cleanData(data);
-					self.result.emails = data.Emails;
-					self.result.total = data.Total
-				});
-			},
-
 			toggleSearchOptions: function() {
 				$('#search_options').slideToggle();
 			},
 
-			search: function() {
-				if (this.query == ''){
-					this.fetchData();
-					return;
-				}
+			searchMsg: function() {
 				var self = this;
 
 				var data = {

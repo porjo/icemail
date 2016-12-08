@@ -17,19 +17,16 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const ResultLimit = 100
+
 type SearchDocHandler struct{}
 type SearchHandler struct{}
 type ListHandler struct{}
 
-type ListRequest struct {
-	// the mail ID to start listing from
-	StartID uint64
-	// the maximum number of messages to list
-	Limit int
-}
-
 type SearchRequest struct {
 	Query string
+	// the mail ID to start listing from
+	//StartID uint64
 	// the maximum number of messages to list
 	Limit     int
 	Locations []string
@@ -54,10 +51,9 @@ func httpServer() {
 
 	// add the API
 	bleveHttp.RegisterIndexName(appName, index)
-	//searchHandler := bleveHttp.NewSearchHandler(appName)
 	router.Handle("/api/search", &SearchHandler{}).Methods("POST")
 	router.Handle("/api/search/{docID}", &SearchDocHandler{}).Methods("GET")
-	router.Handle("/api/list", &ListHandler{}).Methods("POST")
+	router.Handle("/api/list", &SearchHandler{}).Methods("POST")
 	listFieldsHandler := bleveHttp.NewListFieldsHandler(appName)
 	router.Handle("/api/fields", listFieldsHandler).Methods("GET")
 	listIndexesHandler := bleveHttp.NewListIndexesHandler()
@@ -102,13 +98,14 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if searchRequest.Query == "" {
-		http.Error(w, fmt.Sprintf("query string cannot be empty"), 400)
-		return
-	}
-
 	var bQuery query.Query
-	matchQuery := query.NewMatchQuery(searchRequest.Query)
+	var matchQuery query.Query
+
+	if searchRequest.Query == "" {
+		matchQuery = bleve.NewMatchAllQuery()
+	} else {
+		matchQuery = query.NewMatchQuery(searchRequest.Query)
+	}
 	if !searchRequest.StartTime.IsZero() || !searchRequest.EndTime.IsZero() {
 		dateTimeQuery := query.NewDateRangeQuery(
 			searchRequest.StartTime,
@@ -122,6 +119,10 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	bSearchRequest := bleve.NewSearchRequest(bQuery)
 	bSearchRequest.SortBy([]string{"-Header.Date"})
 	bSearchRequest.Fields = []string{"Data"}
+	bSearchRequest.Size = ResultLimit
+	if searchRequest.Limit > 0 && searchRequest.Limit <= ResultLimit {
+		bSearchRequest.Size = searchRequest.Limit
+	}
 
 	// validate the query
 	if srqv, ok := bSearchRequest.Query.(query.ValidatableQuery); ok {
@@ -159,39 +160,6 @@ func (h *SearchDocHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	mustEncode(w, result)
 }
 
-func (h *ListHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	// read the request body
-	requestBody, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("error reading request body: %v", err), 400)
-		return
-	}
-
-	var searchRequest SearchRequest
-	if len(requestBody) > 0 {
-		err = json.Unmarshal(requestBody, &searchRequest)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("error parsing query: %v", err), 400)
-			return
-		}
-	}
-
-	bQuery := bleve.NewMatchAllQuery()
-	bSearchRequest := bleve.NewSearchRequest(bQuery)
-	bSearchRequest.SortBy([]string{"-Header.Date"})
-	bSearchRequest.Fields = []string{"Data"}
-	bSearchRequest.Size = 100 // defaults to 10
-
-	var result SearchResult
-	result, err = doSearch(searchRequest, bSearchRequest, false)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("%s", err), 500)
-		return
-	}
-
-	mustEncode(w, result)
-}
-
 func doSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody bool) (SearchResult, error) {
 	var hResult SearchResult
 	searchResult, err := index.Search(bRequest)
@@ -202,7 +170,7 @@ func doSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody
 	emails := make([]Email, 0)
 
 	for _, hit := range searchResult.Hits {
-		if len(hRequest.Locations) > 0 {
+		if len(hRequest.Locations) > 0 && len(hit.Locations) > 0 {
 			found := false
 			for _, inLoc := range hRequest.Locations {
 				for outLoc, _ := range hit.Locations {
