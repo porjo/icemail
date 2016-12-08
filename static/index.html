@@ -8,6 +8,12 @@
 	<body>
 		<div id='logo'>IceMail <img src="icemail_logo.png" /></div>
 		<div id="app" v-cloak>
+			<modal v-if="showModal" @close="closeModal">
+			<h3 slot="header">{{modal.Title}}</h3>
+			<div slot="body">
+				<pre class='email_body'>{{modal.Body}}</pre>
+			</div>
+			</modal>
 			<div id='search_bar'>
 				<input type="search" size=50 @keyup.enter="search()" v-model="query" placeholder="search keyword">
 				<button @click="search()">Search</button>
@@ -34,7 +40,7 @@
 				<th>From</th>
 				<th>To</th>
 				<th>Date</th>
-				<tr v-for="(email, index) in result.emails">
+				<tr v-for="(email, index) in result.emails" @click="viewMessage(email.ID)">
 					<td>{{ email.Header.Subject[0] }}</td>
 					<td>{{ email.Header.From[0] }}</td>
 					<td>{{ email.Header.To[0] }}</td>
@@ -42,6 +48,36 @@
 				</tr>
 			</table>
 		</div>
+
+		<!-- template for the modal component -->
+		<script type="text/x-template" id="modal-template">
+		<transition name="modal">
+		    <div class="modal-mask" @click="$emit('close')">
+		      <div class="modal-wrapper">
+			<div class="modal-container" v-on:click.stop>
+
+			  <div class="modal-header">
+			    <slot name="header">
+			    </slot>
+			  </div>
+
+			  <div class="modal-body">
+			    <slot name="body">
+			    </slot>
+			  </div>
+
+			  <div class="modal-footer">
+			    <slot name="footer">
+			      <button class="modal-default-button" @click="$emit('close')">
+				OK
+			      </button>
+			    </slot>
+			  </div>
+			</div>
+		      </div>
+		    </div>
+		  </transition>
+		</script>
 		<script src="//code.jquery.com/jquery-3.1.1.min.js"></script>
 		<script src="//unpkg.com/vue/dist/vue.js"></script>
 		<script src="app.js"></script>

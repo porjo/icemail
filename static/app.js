@@ -17,7 +17,12 @@ $(function() {
 			},
 			fields: fields,
 			searchFields: fields,
-			searchDays: 0
+			searchDays: 0,
+			showModal: false,
+			modal: {
+				Title: '',
+				Body: ''
+			}
 		},
 
 		created: function () {
@@ -25,6 +30,22 @@ $(function() {
 		},
 
 		methods: {
+
+			closeModal: function() {
+				$("body").removeClass('modal-open');
+				this.showModal = false;
+			},
+
+			viewMessage: function(id) {
+				var self = this;
+				$("body").addClass('modal-open');
+				$.get(apiURL + '/search/' + id, function(data) {
+					self.modal.Title = data.Emails[0].Header.Subject[0];
+					self.modal.Body = data.Emails[0].Body;
+					self.showModal = true;
+				});
+			},
+
 			fetchData: function () {
 				var self = this;
 				$.post(apiURL + '/list', '{}', function(data) {
@@ -71,15 +92,19 @@ $(function() {
 			}
 		}
 	});
-});
 
-function cleanData(data) {
-	$.each(data.emails, function(k,v) {
-		if( typeof v.Header.Date === 'undefined' )
-			v.Header.Date = '';
-		if( typeof v.Header.From === 'undefined' )
-			v.Header.From = '';
-		if( typeof v.Header.To === 'undefined' )
-			v.Header.To = '';
-	});
-}
+	Vue.component('modal', {
+		template: '#modal-template'
+	})
+
+	function cleanData(data) {
+		$.each(data.emails, function(k,v) {
+			if( typeof v.Header.Date === 'undefined' )
+				v.Header.Date = '';
+			if( typeof v.Header.From === 'undefined' )
+				v.Header.From = '';
+			if( typeof v.Header.To === 'undefined' )
+				v.Header.To = '';
+		});
+	}
+});

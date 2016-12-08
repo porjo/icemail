@@ -45,7 +45,7 @@ type SearchResult struct {
 type Email struct {
 	ID     string
 	Header mail.Header
-	Body   string `json:"body,omitempty"`
+	Body   string `json:"Body,omitempty"`
 }
 
 func httpServer() {
