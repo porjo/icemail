@@ -19,9 +19,9 @@ import (
 
 const ResultLimit = 100
 
+type MailHandler struct{}
 type SearchDocHandler struct{}
 type SearchHandler struct{}
-type ListHandler struct{}
 
 type SearchRequest struct {
 	Query string
@@ -39,6 +39,10 @@ type SearchResult struct {
 	Emails []Email
 }
 
+type MailResult struct {
+	Success bool
+}
+
 type Email struct {
 	ID     string
 	Header mail.Header
@@ -53,6 +57,7 @@ func httpServer() {
 	bleveHttp.RegisterIndexName(appName, index)
 	router.Handle("/api/search", &SearchHandler{}).Methods("POST")
 	router.Handle("/api/search/{docID}", &SearchDocHandler{}).Methods("GET")
+	router.Handle("/api/mail/{docID}", &MailHandler{}).Methods("GET")
 	router.Handle("/api/list", &SearchHandler{}).Methods("POST")
 	listFieldsHandler := bleveHttp.NewListFieldsHandler(appName)
 	router.Handle("/api/fields", listFieldsHandler).Methods("GET")
@@ -153,6 +158,36 @@ func (h *SearchDocHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	var result SearchResult
 	result, err = doSearch(SearchRequest{}, bSearchRequest, true)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("%s", err), 500)
+		return
+	}
+	mustEncode(w, result)
+}
+
+func (h *MailHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	var err error
+	var searchRequest SearchRequest
+	docID := mux.Vars(req)["docID"]
+
+	/*
+		// read the request body
+		requestBody, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("error reading request body: %v", err), 400)
+			return
+		}
+
+		// parse the request
+		err = json.Unmarshal(requestBody, &searchRequest)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("error parsing request: %v", err), 400)
+			return
+		}
+	*/
+
+	var result MailResult
+	result, err = sendMail(searchRequest, docID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), 500)
 		return

@@ -7,12 +7,16 @@ import (
 	"github.com/porjo/icemail/smtpd"
 )
 
-var mailAddr string = "127.0.0.1:2525"
-var httpAddr string = "127.0.0.1:8080"
-var index bleve.Index
-var appName string = "icemail"
-var staticPath string = "static"
-var messageBucket string = "messages"
+var (
+	mailAddr      string = "127.0.0.1:2525"
+	httpAddr      string = "127.0.0.1:8080"
+	index         bleve.Index
+	appName       string = "icemail"
+	staticPath    string = "static"
+	messageBucket string = "messages"
+
+	smtpAddr string = "127.0.0.1:25"
+)
 
 func main() {
 	var err error

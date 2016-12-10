@@ -85,7 +85,7 @@ $(function() {
 	})
 
 	function cleanData(data) {
-		$.each(data.emails, function(k,v) {
+		$.each(data.Emails, function(k,v) {
 			if( typeof v.Header.Date === 'undefined' )
 				v.Header.Date = '';
 			if( typeof v.Header.From === 'undefined' )
