@@ -92,8 +92,16 @@ func sendMail(hRequest SearchRequest, docID string) (MailResult, error) {
 
 		to := msg.Header["To"]
 		from := msg.Header.Get("From")
-		err = smtp.SendMail(smtpAddr, nil, from, to, []byte(raw))
-		if err != nil {
+
+		var host string
+		if host, _, err = net.SplitHostPort(config.SMTPServerAddr); err != nil {
+			return hResult, err
+		}
+		var auth smtp.Auth
+		if config.SMTPServerUsername != "" && config.SMTPServerPassword != "" {
+			auth = smtp.PlainAuth("", config.SMTPServerUsername, config.SMTPServerPassword, host)
+		}
+		if err = smtp.SendMail(config.SMTPBindAddr, auth, from, to, []byte(raw)); err != nil {
 			return hResult, fmt.Errorf("error sending mail with ID %s: %v", docID, err)
 		} else {
 			subject := msg.Header.Get("Subject")

@@ -73,8 +73,8 @@ func httpServer() {
 
 	// start the HTTP server
 	http.Handle("/", router)
-	log.Printf("HTTP Server listening on %v", httpAddr)
-	log.Fatal(http.ListenAndServe(httpAddr, nil))
+	fmt.Printf("HTTP Server listening on %v\n", config.HTTPBindAddr)
+	log.Fatal(http.ListenAndServe(config.HTTPBindAddr, nil))
 }
 
 func staticFileRouter() *mux.Router {
@@ -82,7 +82,7 @@ func staticFileRouter() *mux.Router {
 	r.StrictSlash(true)
 
 	// static
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(staticPath))))
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(config.HTTPStaticDir))))
 
 	r.Handle("/", http.RedirectHandler("/static/index.html", 302))
 
@@ -210,7 +210,6 @@ func doSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody
 
 	emails := make([]Email, 0)
 
-	fmt.Printf("hits %d\n", len(searchResult.Hits))
 	for _, hit := range searchResult.Hits {
 		if len(hRequest.Locations) > 0 && len(hit.Locations) > 0 {
 			found := false
