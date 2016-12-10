@@ -142,6 +142,13 @@ body {
 	padding: 0 10px;
 }
 
+.email_actions {
+	display: inline-block;
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+
 /* Modal Styles */
 
 .modal-mask {
@@ -172,6 +179,10 @@ body {
 	font-family: Helvetica, Arial, sans-serif;
 }
 
+.modal-header {
+	position: relative;
+}
+
 .modal-header h3 {
 	margin-top: 0;
 	color: #42b983;
@@ -181,7 +192,15 @@ body {
 	margin: 20px 0;
 }
 
+.modal-footer {
+	position: relative;
+	height: 40px;
+}
+
 .modal-default-button {
+	position: absolute;
+	right: 0;
+	bottom: 0;
 }
 
 .modal-open {

@@ -10,7 +10,12 @@
 			<div id='logo'>IceMail <img src="icemail_logo.png" /></div>
 			<div id="app" v-cloak>
 				<modal v-if="showModal" @close="closeModal">
-				<h3 slot="header">{{modal.Title}}</h3>
+				<div slot="header">
+					<h3>{{modal.Title}}</h3>
+					<div class='email_actions'>
+						<button class="modal-sendmail-button" @click="sendMsg(modal.ID)">Send Mail</button>
+					</div>
+				</div>
 				<div slot="body">
 					<pre class='email_body'>{{modal.Body}}</pre>
 				</div>
@@ -50,7 +55,7 @@
 					<th>From</th>
 					<th>To</th>
 					<th>Date</th>
-					<tr v-for="(email, index) in result.emails" @click="viewMessage(email.ID)">
+					<tr v-for="(email, index) in result.emails" @click="viewMsg(email.ID)">
 						<td>{{ email.Header.Subject[0] }}</td>
 						<td>{{ email.Header.From[0] }}</td>
 						<td>{{ email.Header.To[0] }}</td>
@@ -79,9 +84,7 @@
 
 			  <div class="modal-footer">
 			    <slot name="footer">
-			      <button class="modal-default-button" @click="$emit('close')">
-				OK
-			      </button>
+			      <button class="modal-default-button" @click="$emit('close')">OK</button>
 			    </slot>
 			  </div>
 			</div>

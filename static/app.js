@@ -28,7 +28,8 @@ $(function() {
 			},
 			modal: {
 				Title: '',
-				Body: ''
+				Body: '',
+				ID: 0
 			}
 		},
 
@@ -43,7 +44,14 @@ $(function() {
 				this.showModal = false;
 			},
 
-			viewMessage: function(id) {
+			sendMsg: function(id) {
+				var self = this;
+				$.get(apiURL + '/mail/' + id, function(data) {
+					console.log(data);
+				});
+			},
+
+			viewMsg: function(id) {
 				var haveSel = getSelection().toString().length > 0;
 				if( haveSel ) {
 					return;
@@ -53,6 +61,7 @@ $(function() {
 				$.get(apiURL + '/search/' + id, function(data) {
 					self.modal.Title = data.Emails[0].Header.Subject[0];
 					self.modal.Body = data.Emails[0].Body;
+					self.modal.ID = data.Emails[0].ID;
 					self.showModal = true;
 				});
 			},

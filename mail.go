@@ -101,7 +101,7 @@ func sendMail(hRequest SearchRequest, docID string) (MailResult, error) {
 		if config.SMTPServerUsername != "" && config.SMTPServerPassword != "" {
 			auth = smtp.PlainAuth("", config.SMTPServerUsername, config.SMTPServerPassword, host)
 		}
-		if err = smtp.SendMail(config.SMTPBindAddr, auth, from, to, []byte(raw)); err != nil {
+		if err = smtp.SendMail(config.SMTPServerAddr, auth, from, to, []byte(raw)); err != nil {
 			return hResult, fmt.Errorf("error sending mail with ID %s: %v", docID, err)
 		} else {
 			subject := msg.Header.Get("Subject")
