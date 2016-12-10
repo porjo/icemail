@@ -1,6 +1,6 @@
 var apiURL = '//localhost:8080/api';
 
-var	msgLimit = 40;
+var	msgLimit = 35;
 
 var fields = [
 	"From",
@@ -44,6 +44,10 @@ $(function() {
 			},
 
 			viewMessage: function(id) {
+				var haveSel = getSelection().toString().length > 0;
+				if( haveSel ) {
+					return;
+				}
 				var self = this;
 				$("body").addClass('modal-open');
 				$.get(apiURL + '/search/' + id, function(data) {
