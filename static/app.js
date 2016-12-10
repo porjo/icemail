@@ -1,5 +1,7 @@
 var apiURL = '//localhost:8080/api';
 
+var	msgLimit = 20;
+
 var fields = [
 	"From",
 	"To",
@@ -10,15 +12,20 @@ $(function() {
 	var app = new Vue({
 		el: '#app',
 		data: {
-			query: "",
 			result: {
 				emails: [],
-				total: 0
+				total: 0,
+				offset: 0
 			},
 			fields: fields,
-			searchFields: fields,
 			searchDays: 0,
 			showModal: false,
+			request: {
+				query: "",
+				limit: msgLimit,
+				offset: 0,
+				locations: fields,
+			},
 			modal: {
 				Title: '',
 				Body: ''
@@ -50,30 +57,43 @@ $(function() {
 				$('#search_options').slideToggle();
 			},
 
-			searchMsg: function() {
+			searchMsg: function(direction) {
 				var self = this;
 
-				var data = {
-					query: this.query,
-					locations: this.searchFields,
-				};
+				var request = $.extend({}, this.request);
 
 				if( this.searchDays > 0) {
 					var startTime = new Date();
 					startTime.setDate(startTime.getDate() - this.searchDays);
-					data.starttime = startTime.toISOString();
+					request.starttime = startTime.toISOString();
+				}
+
+				if( typeof direction !== "undefined" ) {
+					var offset = 0;
+					if(direction == 'back') {
+						offset = this.result.offset - request.limit;
+					} else {
+						offset = this.result.offset + request.limit;
+					}
+					if( offset < 0  || offset > this.result.total ) {
+							// abort search out of limits
+							return;
+					} else {
+						request.offset = offset;
+					}
 				}
 
 				$.ajax({
 					url: apiURL + '/search',
 					type: 'post',
-					data: JSON.stringify(data),
+					data: JSON.stringify(request),
 					contentType: 'application/json',
 					dataType: 'json',
 					success: function(data) {
 						cleanData(data);
 						self.result.emails = data.Emails;
-						self.result.total = data.Total
+						self.result.total = data.Total;
+						self.result.offset = data.Offset;
 					}
 				});
 			}

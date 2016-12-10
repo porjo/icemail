@@ -29,6 +29,7 @@ type SearchRequest struct {
 	//StartID uint64
 	// the maximum number of messages to list
 	Limit     int
+	Offset    int
 	Locations []string
 	StartTime time.Time
 	EndTime   time.Time
@@ -36,6 +37,7 @@ type SearchRequest struct {
 
 type SearchResult struct {
 	Total  uint64
+	Offset int
 	Emails []Email
 }
 
@@ -124,9 +126,11 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	bSearchRequest := bleve.NewSearchRequest(bQuery)
 	bSearchRequest.SortBy([]string{"-Header.Date"})
 	bSearchRequest.Fields = []string{"Data"}
-	bSearchRequest.Size = ResultLimit
+	bSearchRequest.From = searchRequest.Offset
 	if searchRequest.Limit > 0 && searchRequest.Limit <= ResultLimit {
 		bSearchRequest.Size = searchRequest.Limit
+	} else {
+		bSearchRequest.Size = ResultLimit
 	}
 
 	// validate the query
@@ -144,6 +148,8 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, fmt.Sprintf("%s", err), 500)
 		return
 	}
+
+	result.Offset = searchRequest.Offset
 	mustEncode(w, result)
 }
 
@@ -204,6 +210,7 @@ func doSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody
 
 	emails := make([]Email, 0)
 
+	fmt.Printf("hits %d\n", len(searchResult.Hits))
 	for _, hit := range searchResult.Hits {
 		if len(hRequest.Locations) > 0 && len(hit.Locations) > 0 {
 			found := false

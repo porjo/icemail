@@ -5,6 +5,8 @@ body {
 
 .message_list {
 	width: 100%;
+	border-collapse: collapse;
+	cellspacing: 1;
 }
 
 .message_list th {
@@ -32,9 +34,45 @@ body {
 	font-weight: bold;
 }
 
-.results_stats {
+.results_bar {
 	margin-top: 20px;
+	margin-bottom: 5px;
+	margin-left: auto;
+	margin-right: auto;
+	width: 400px;
 	color: #777;
+	display: flex;
+	justify-content: space-between;
+}
+
+.results_stats {
+	display: inline-block;
+	text-align: center;
+}
+
+.results_action {
+	display: inline-block;
+	cursor: pointer;
+	text-align: center;
+	width: 20px;
+	height: 20px;
+	line-height: 20px;
+	color: #999;
+}
+
+.arrow {
+	width: 0;
+	height: 0;
+	border-top: 10px solid transparent;
+	border-bottom: 10px solid transparent;
+}
+
+.arrow.left {
+	border-right: 20px solid;
+}
+
+.arrow.right {
+	border-left: 20px solid;
 }
 
 #search_bar {

@@ -15,7 +15,7 @@
 			</div>
 			</modal>
 			<div id='search_bar'>
-				<input type="search" size=50 @keyup.enter="searchMsg()" v-model="query" placeholder="search keyword">
+				<input type="search" size=50 @keyup.enter="searchMsg()" v-model="request.query" placeholder="search keyword">
 				<button @click="searchMsg()">Search</button>
 				<div id='search_options_toggle' @click="toggleSearchOptions()">Advanced Options</div>
 				<div id='search_options'>
@@ -23,7 +23,7 @@
 						<div class='label'>Search these fields:</div>
 						<div class='value'>
 							<template v-for="field in fields">
-								<input type="checkbox" :value='field' v-model="searchFields">{{field}}
+								<input type="checkbox" :value='field' v-model="request.locations">{{field}}
 							</template>
 						</div>
 
@@ -34,7 +34,15 @@
 					</div>
 				</div>
 			</div>
-			<div class='results_stats'>{{ result.emails.length }} result(s) of {{result.total}}</div>
+			<div class='results_bar'>
+				<div class='results_action' @click="searchMsg('back')">
+					<div class='arrow left'></div>
+				</div>
+				<div class='results_stats'>{{ result.offset + 1 }} to {{ result.offset + result.emails.length }} of {{result.total}}</div>
+				<div class='results_action' @click="searchMsg('fwd')">
+					<div class='arrow right'></div>
+				</div>
+			</div>
 			<table class='message_list' v-if="result.emails.length > 0">
 				<th>Subject</th>
 				<th>From</th>
