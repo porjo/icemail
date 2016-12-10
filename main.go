@@ -1,76 +1,23 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/smtp"
 
-	"github.com/BurntSushi/toml"
 	"github.com/blevesearch/bleve"
 	"github.com/porjo/icemail/smtpd"
 )
 
-const (
-	smtpBindAddr  = "127.0.0.1:2525"
-	httpBindAddr  = "127.0.0.1:8080"
-	httpStaticDir = "static"
-
-	appName       = "icemail"
-	messageBucket = "messages"
-
-	smtpServerAddr = "127.0.0.1:25"
-)
-
 var (
-	index  bleve.Index
-	config tomlConfig
+	index bleve.Index
 )
-
-type tomlConfig struct {
-	SMTPBindAddr  string `toml:"smtp_bind_addr"`
-	HTTPBindAddr  string `toml:"http_bind_addr"`
-	HTTPStaticDir string `toml:"http_static_dir"`
-
-	SMTPServerAddr     string `toml:"smtp_server_addr"`
-	SMTPServerUsername string `toml:"smtp_server_username"`
-	SMTPServerPassword string `toml:"smtp_server_password"`
-
-	StorageDir string `toml:"storage_dir"`
-
-	WhitelistDomains []string `toml:"whitelist_domains"`
-	WhitelistEmails  []string `toml:"whitelist_emails"`
-}
 
 func main() {
 	var err error
 
-	configFile := flag.String("c", "", "config filename")
-	flag.Parse()
-
-	if *configFile == "" {
-		fmt.Println("Please specify a config file")
-		flag.PrintDefaults()
-		return
-	}
-
-	if _, err := toml.DecodeFile(*configFile, &config); err != nil {
+	if err = loadConfig(); err != nil {
 		log.Fatal(err)
-	}
-
-	fmt.Printf("Loaded config file '%s'\n", *configFile)
-
-	if config.SMTPBindAddr == "" {
-		config.SMTPBindAddr = smtpBindAddr
-	}
-	if config.HTTPBindAddr == "" {
-		config.HTTPBindAddr = httpBindAddr
-	}
-	if config.HTTPStaticDir == "" {
-		config.HTTPStaticDir = httpStaticDir
-	}
-	if config.SMTPServerAddr == "" {
-		config.SMTPServerAddr = smtpServerAddr
 	}
 
 	var indexDir string
