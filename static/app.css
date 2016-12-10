@@ -3,20 +3,29 @@ body {
 	color: #333;
 }
 
+#container {
+	margin: 0 auto;
+	max-width: 1400px;
+}
+
 .message_list {
 	width: 100%;
 	border-collapse: collapse;
-	cellspacing: 1;
+}
+
+.message_list td {
+	padding: 0 5px;
 }
 
 .message_list th {
 	color: #fff;
-	background-color: #888;
+	background-color: #617F8D;
 	padding: 5px 0;
+	cursor: initial;
 }
 
 .message_list tr {
-	background-color: #F2F2F2;
+	background-color: #DDF0FB;
 	cursor: pointer;
 }
 
@@ -32,6 +41,16 @@ body {
 	float: right;
 	font-size: 1.5em;
 	font-weight: bold;
+	margin: 10px;
+}
+
+.no_results {
+	margin: 0 auto;
+	width: 50%;
+	text-align: center;
+	border: 2px solid #ddd;
+	padding: 10px;
+	margin-top: 50px;
 }
 
 .results_bar {

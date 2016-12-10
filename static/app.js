@@ -1,6 +1,6 @@
 var apiURL = '//localhost:8080/api';
 
-var	msgLimit = 20;
+var	msgLimit = 40;
 
 var fields = [
 	"From",
