@@ -46,9 +46,10 @@ type MailResult struct {
 }
 
 type Email struct {
-	ID     string
-	Header mail.Header
-	Body   string `json:"Body,omitempty"`
+	ID        string
+	Header    mail.Header
+	Body      string     `json:"Body,omitempty"`
+	Delivered *time.Time `json:"Delivered,omitempty"`
 }
 
 func httpServer() {
@@ -160,7 +161,7 @@ func (h *SearchDocHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	docQuery := query.NewDocIDQuery([]string{docID})
 
 	bSearchRequest := bleve.NewSearchRequest(docQuery)
-	bSearchRequest.Fields = []string{"Data"}
+	bSearchRequest.Fields = []string{"Data", "Delivered"}
 
 	var result SearchResult
 	result, err = doSearch(SearchRequest{}, bSearchRequest, true)
@@ -175,22 +176,6 @@ func (h *MailHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var err error
 	var searchRequest SearchRequest
 	docID := mux.Vars(req)["docID"]
-
-	/*
-		// read the request body
-		requestBody, err := ioutil.ReadAll(req.Body)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("error reading request body: %v", err), 400)
-			return
-		}
-
-		// parse the request
-		err = json.Unmarshal(requestBody, &searchRequest)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("error parsing request: %v", err), 400)
-			return
-		}
-	*/
 
 	var result MailResult
 	result, err = sendMail(searchRequest, docID)
@@ -240,7 +225,16 @@ func doSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody
 			if includeBody {
 				body = v
 			}
-			lr := Email{hit.ID, msg.Header, body}
+			var delivered *time.Time
+			if deliveredS, ok := hit.Fields["Delivered"].(string); ok {
+				var d time.Time
+				if d, err = time.Parse(time.RFC3339, deliveredS); err != nil {
+					return hResult, err
+				}
+				delivered = &d
+			}
+
+			lr := Email{hit.ID, msg.Header, body, delivered}
 			emails = append(emails, lr)
 		} else {
 			return hResult, fmt.Errorf("error retrieving document")

@@ -32,20 +32,7 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 		return err
 	}
 
-	/*
-		if msg.Header.Get("Date") == "" {
-			now := time.Now().Format(RFC1123ZnoPadDay)
-			msg.Header["Date"] = []string{now}
-		}
-		if msg.Header.Get("To") == "" {
-			msg.Header["To"] = to
-		}
-		if msg.Header.Get("From") == "" {
-			msg.Header["From"] = []string{from}
-		}
-	*/
-
-	doc := bleveDoc{"message", msg.Header, string(data)}
+	doc := bleveDoc{Type: "message", Header: msg.Header, Data: string(data)}
 
 	id := fmt.Sprintf("%v", time.Now().UnixNano())
 	if err := index.Index(id, doc); err != nil {
@@ -76,11 +63,12 @@ func sendMail(hRequest SearchRequest, docID string) (MailResult, error) {
 		return hResult, fmt.Errorf("error executing query: %v", err)
 	}
 
+	var raw string
+	var delivered time.Time
+	var msg *mail.Message
 	if len(searchResult.Hits) == 1 {
 		hit := searchResult.Hits[0]
-		var raw string
 		var ok bool
-		var msg *mail.Message
 		if raw, ok = hit.Fields["Data"].(string); ok {
 			msg, err = mail.ReadMessage(strings.NewReader(raw))
 			if err != nil {
@@ -107,9 +95,22 @@ func sendMail(hRequest SearchRequest, docID string) (MailResult, error) {
 			subject := msg.Header.Get("Subject")
 			log.Printf("Sending mail ID %s, To: '%s', Subject: '%s'\n", docID, to[0], subject)
 		}
-		hResult.Success = true
+		delivered = time.Now()
 	} else {
 		return hResult, fmt.Errorf("mail with ID %s not found", docID)
+	}
+
+	// Remove document from index, then re-add with 'delivered' time set
+	if !delivered.IsZero() {
+
+		if err = index.Delete(docID); err != nil {
+			return hResult, err
+		}
+		doc := bleveDoc{Type: "message", Header: msg.Header, Data: raw, Delivered: delivered}
+		if err := index.Index(docID, doc); err != nil {
+			return hResult, err
+		}
+		hResult.Success = true
 	}
 
 	return hResult, nil

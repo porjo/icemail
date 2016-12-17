@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/mail"
+	"time"
 
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis"
@@ -14,7 +15,8 @@ type bleveDoc struct {
 	Type   string
 	Header mail.Header
 	// store raw email data
-	Data string
+	Data      string
+	Delivered time.Time
 }
 
 // locationsBase is prepended to locations being filtered on

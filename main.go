@@ -41,6 +41,11 @@ func main() {
 		fmt.Printf("Loading database '%s'\n", indexDir)
 	}
 
+	// sanity check
+	if config.SMTPServerAddr == config.SMTPBindAddr {
+		log.Fatalf("SMTP server and bind address cannot be the same!\n")
+	}
+
 	//Test SMTP server connection
 	var c *smtp.Client
 	if c, err = smtp.Dial(config.SMTPServerAddr); err != nil {
