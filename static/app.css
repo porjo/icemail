@@ -149,6 +149,15 @@ body {
 	top: 0;
 }
 
+.delivered_date {
+	background-color: #aaa;
+	border: 1px solid #888;
+	border-radius: 5px;
+	color: #fff;
+	padding: 5px;
+	font-size: 0.8em;
+}
+
 /* Modal Styles */
 
 .modal-mask {

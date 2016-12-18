@@ -126,7 +126,7 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	bSearchRequest := bleve.NewSearchRequest(bQuery)
 	bSearchRequest.SortBy([]string{"-Header.Date"})
-	bSearchRequest.Fields = []string{"Data"}
+	bSearchRequest.Fields = []string{"Data", "Delivered"}
 	bSearchRequest.From = searchRequest.Offset
 	if searchRequest.Limit > 0 && searchRequest.Limit <= ResultLimit {
 		bSearchRequest.Size = searchRequest.Limit

@@ -13,7 +13,8 @@
 				<div slot="header">
 					<h3>{{modal.Title}}</h3>
 					<div class='email_actions'>
-						<button class="modal-sendmail-button" @click="sendMsg(modal.ID)">Send Mail</button>
+						<button v-if='modal.Delivered == ""' class="modal-sendmail-button" @click="sendMsg(modal.ID)">Send Mail</button>
+						<span class='delivered_date' v-if='modal.Delivered != ""'>Email was delivered on {{modal.Delivered}}</span>
 					</div>
 				</div>
 				<div slot="body">
@@ -51,15 +52,17 @@
 					</div>
 				</div>
 				<table class='message_list' v-if="result.emails.length > 0">
+					<th></th>
 					<th>Subject</th>
 					<th>From</th>
 					<th>To</th>
 					<th>Date</th>
 					<tr v-for="(email, index) in result.emails" @click="viewMsg(email.ID)">
+						<td><span class='delivered_flag'><span v-if='email.Delivered'>X</span></span></td>
 						<td>{{ email.Header.Subject[0] }}</td>
 						<td>{{ email.Header.From[0] }}</td>
 						<td>{{ email.Header.To[0] }}</td>
-						<td>{{ email.Header.Date[0] }}</td>
+						<td>{{ email.Header.Date[0] | fromNow }}</td>
 					</tr>
 				</table>
 			</div>
@@ -94,6 +97,7 @@
 		</script>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/vue/2.1.4/vue.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.1/moment.min.js"></script>
 		<script src="app.js"></script>
 	</body>
 </html>

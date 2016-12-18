@@ -8,6 +8,12 @@ var fields = [
 	"Subject"
 ];
 
+var dateFormat = "ddd, DD MMM YYYY HH:mm:ss Z"
+
+Vue.filter('fromNow', function(value) {
+	return moment(value, dateFormat).fromNow(true);
+});
+
 $(function() {
 	var app = new Vue({
 		el: '#app',
@@ -29,7 +35,8 @@ $(function() {
 			modal: {
 				Title: '',
 				Body: '',
-				ID: 0
+				ID: 0,
+				Delivered: '',
 			}
 		},
 
@@ -47,7 +54,6 @@ $(function() {
 			sendMsg: function(id) {
 				var self = this;
 				$.get(apiURL + '/mail/' + id, function(data) {
-					console.log(data);
 				});
 			},
 
@@ -62,6 +68,11 @@ $(function() {
 					self.modal.Title = data.Emails[0].Header.Subject[0];
 					self.modal.Body = data.Emails[0].Body;
 					self.modal.ID = data.Emails[0].ID;
+					if( typeof data.Emails[0].Delivered != "undefined") {
+						self.modal.Delivered = moment(data.Emails[0].Delivered).format('YYYY-MM-DD');
+					} else {
+						self.modal.Delivered = '';
+					}
 					self.showModal = true;
 				});
 			},
