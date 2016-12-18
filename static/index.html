@@ -58,11 +58,11 @@
 					<th>To</th>
 					<th>Date</th>
 					<tr v-for="(email, index) in result.emails" @click="viewMsg(email.ID)">
-						<td><span class='delivered_flag'><span v-if='email.Delivered'>X</span></span></td>
+						<td class='flag_col'><span class='delivered_flag'><span v-if='email.Delivered'>X</span></span></td>
 						<td>{{ email.Header.Subject[0] }}</td>
-						<td>{{ email.Header.From[0] }}</td>
-						<td>{{ email.Header.To[0] }}</td>
-						<td>{{ email.Header.Date[0] | fromNow }}</td>
+						<td class='fixed_col'>{{ email.Header.From[0] }}</td>
+						<td class='fixed_col'>{{ email.Header.To[0] }}</td>
+						<td class='fixed_col'>{{ email.Header.Date[0] | fromNow }}</td>
 					</tr>
 				</table>
 			</div>

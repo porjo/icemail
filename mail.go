@@ -32,6 +32,12 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 		return err
 	}
 
+	// Make sure header field has a valid date so it can be expired later
+	if msg.Header.Get("Date") == "" {
+		now := time.Now().Format(RFC1123ZnoPadDay)
+		msg.Header["Date"] = []string{now}
+	}
+
 	doc := bleveDoc{Type: "message", Header: msg.Header, Data: string(data)}
 
 	id := fmt.Sprintf("%v", time.Now().UnixNano())

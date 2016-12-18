@@ -221,20 +221,18 @@ func doSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody
 			if err != nil {
 				return hResult, err
 			}
-			body := ""
+			lr := Email{ID: hit.ID, Header: msg.Header}
 			if includeBody {
-				body = v
+				lr.Body = v
 			}
-			var delivered *time.Time
 			if deliveredS, ok := hit.Fields["Delivered"].(string); ok {
 				var d time.Time
 				if d, err = time.Parse(time.RFC3339, deliveredS); err != nil {
 					return hResult, err
 				}
-				delivered = &d
+				lr.Delivered = &d
 			}
 
-			lr := Email{hit.ID, msg.Header, body, delivered}
 			emails = append(emails, lr)
 		} else {
 			return hResult, fmt.Errorf("error retrieving document")

@@ -17,6 +17,13 @@ body {
 	padding: 0 5px;
 }
 
+.message_list td.fixed_col {
+	width: 200px;
+}
+.message_list td.flag_col {
+	width: 30px;
+}
+
 .message_list th {
 	color: #fff;
 	background-color: #617F8D;
@@ -150,11 +157,6 @@ body {
 }
 
 .delivered_date {
-	background-color: #aaa;
-	border: 1px solid #888;
-	border-radius: 5px;
-	color: #fff;
-	padding: 5px;
 	font-size: 0.8em;
 }
 
