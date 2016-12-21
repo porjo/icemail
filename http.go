@@ -177,13 +177,12 @@ func (h *MailHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var searchRequest SearchRequest
 	docID := mux.Vars(req)["docID"]
 
-	var result MailResult
-	result, err = sendMail(searchRequest, docID)
+	err = sendMailDoc(searchRequest, docID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), 500)
 		return
 	}
-	mustEncode(w, result)
+	mustEncode(w, nil)
 }
 
 func doSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody bool) (SearchResult, error) {

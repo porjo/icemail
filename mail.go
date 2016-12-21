@@ -32,6 +32,22 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 		return err
 	}
 
+	subject := msg.Header.Get("Subject")
+
+	var addresses []*mail.Address
+	if addresses, err = msg.Header.AddressList("To"); err != nil {
+		return err
+	}
+
+	if isWhitelisted(addresses) {
+		err = sendMail(data, *msg)
+		if err != nil {
+			return err
+		}
+		log.Printf("Email passed due to whitelisting To: '%s', From: '%s', Subject: '%s'\n", to[0], from, subject)
+		return nil
+	}
+
 	// Make sure header field has a valid date so it can be expired later
 	if msg.Header.Get("Date") == "" {
 		now := time.Now().Format(RFC1123ZnoPadDay)
@@ -45,7 +61,6 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 		return err
 	}
 
-	subject := msg.Header.Get("Subject")
 	log.Printf("Received mail ID %s, To: '%s', From: '%s', Subject: '%s'\n", id, to[0], from, subject)
 	return nil
 }
@@ -57,67 +72,88 @@ func itob(v uint64) []byte {
 	return b
 }
 
-func sendMail(hRequest SearchRequest, docID string) (MailResult, error) {
+func sendMailDoc(hRequest SearchRequest, docID string) error {
 	docQuery := query.NewDocIDQuery([]string{docID})
 
 	bRequest := bleve.NewSearchRequest(docQuery)
 	bRequest.Fields = []string{"Data"}
 
-	var hResult MailResult
 	searchResult, err := index.Search(bRequest)
 	if err != nil {
-		return hResult, fmt.Errorf("error executing query: %v", err)
+		return fmt.Errorf("error executing query: %v", err)
 	}
 
 	var raw string
 	var delivered time.Time
 	var msg *mail.Message
-	if len(searchResult.Hits) == 1 {
-		hit := searchResult.Hits[0]
-		var ok bool
-		if raw, ok = hit.Fields["Data"].(string); ok {
-			msg, err = mail.ReadMessage(strings.NewReader(raw))
-			if err != nil {
-				return hResult, err
-			}
-		} else {
-			return hResult, fmt.Errorf("error retrieving document")
+	if len(searchResult.Hits) != 1 {
+		return fmt.Errorf("mail with ID %s not found", docID)
+	}
+	hit := searchResult.Hits[0]
+	var ok bool
+	if raw, ok = hit.Fields["Data"].(string); ok {
+		msg, err = mail.ReadMessage(strings.NewReader(raw))
+		if err != nil {
+			return err
 		}
-
-		to := msg.Header["To"]
-		from := msg.Header.Get("From")
-
-		var host string
-		if host, _, err = net.SplitHostPort(config.SMTPServerAddr); err != nil {
-			return hResult, err
-		}
-		var auth smtp.Auth
-		if config.SMTPServerUsername != "" && config.SMTPServerPassword != "" {
-			auth = smtp.PlainAuth("", config.SMTPServerUsername, config.SMTPServerPassword, host)
-		}
-		if err = smtp.SendMail(config.SMTPServerAddr, auth, from, to, []byte(raw)); err != nil {
-			return hResult, fmt.Errorf("error sending mail with ID %s: %v", docID, err)
-		} else {
-			subject := msg.Header.Get("Subject")
-			log.Printf("Sending mail ID %s, To: '%s', Subject: '%s'\n", docID, to[0], subject)
-		}
-		delivered = time.Now()
 	} else {
-		return hResult, fmt.Errorf("mail with ID %s not found", docID)
+		return fmt.Errorf("error retrieving document")
 	}
 
-	// Remove document from index, then re-add with 'delivered' time set
-	if !delivered.IsZero() {
-
-		if err = index.Delete(docID); err != nil {
-			return hResult, err
-		}
-		doc := bleveDoc{Type: "message", Header: msg.Header, Data: raw, Delivered: delivered}
-		if err := index.Index(docID, doc); err != nil {
-			return hResult, err
-		}
-		hResult.Success = true
+	if err = sendMail([]byte(raw), *msg); err != nil {
+		return fmt.Errorf("error sending mail with ID %s: %v", docID, err)
 	}
 
-	return hResult, nil
+	delivered = time.Now()
+
+	if err = index.Delete(docID); err != nil {
+		return err
+	}
+	doc := bleveDoc{Type: "message", Header: msg.Header, Data: raw, Delivered: delivered}
+	if err := index.Index(docID, doc); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func sendMail(data []byte, msg mail.Message) error {
+	var err error
+	to := msg.Header["To"]
+	from := msg.Header.Get("From")
+
+	var host string
+	if host, _, err = net.SplitHostPort(config.SMTPServerAddr); err != nil {
+		return err
+	}
+	var auth smtp.Auth
+	if config.SMTPServerUsername != "" && config.SMTPServerPassword != "" {
+		auth = smtp.PlainAuth("", config.SMTPServerUsername, config.SMTPServerPassword, host)
+	}
+	if err = smtp.SendMail(config.SMTPServerAddr, auth, from, to, data); err != nil {
+		return err
+	} else {
+		subject := msg.Header.Get("Subject")
+		log.Printf("Sending mail, To: '%s', Subject: '%s'\n", to[0], subject)
+	}
+
+	return nil
+}
+
+func isWhitelisted(emails []*mail.Address) bool {
+	for _, e := range emails {
+		for _, w := range config.Whitelist {
+			if strings.Contains(w, "@") {
+				if w == e.Address {
+					return true
+				}
+			} else {
+				parts := strings.Split(e.Address, "@")
+				if len(parts) == 2 && w == parts[1] {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }

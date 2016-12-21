@@ -33,8 +33,7 @@ type tomlConfig struct {
 
 	StorageDir string `toml:"storage_dir"`
 
-	WhitelistDomains []string `toml:"whitelist_domains"`
-	WhitelistEmails  []string `toml:"whitelist_emails"`
+	Whitelist []string `toml:"whitelist"`
 }
 
 func loadConfig() error {
@@ -48,7 +47,7 @@ func loadConfig() error {
 	}
 
 	if _, err := toml.DecodeFile(*configFile, &config); err != nil {
-		return err
+		return fmt.Errorf("error parsing config file '%s': %s", *configFile, err)
 	}
 
 	fmt.Printf("Loaded config file '%s'\n", *configFile)
