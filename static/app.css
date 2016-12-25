@@ -74,6 +74,8 @@ body {
 .results_stats {
 	display: inline-block;
 	text-align: center;
+	width: 100%;
+	font-size: 0.9em;
 }
 
 .results_action {
@@ -86,11 +88,21 @@ body {
 	color: #999;
 }
 
+.results_page {
+	font-size: 0.9em;
+	cursor: pointer;
+}
+
+.results_page.active {
+	font-weight: bold;
+	color: #000;
+}
+
 .arrow {
 	width: 0;
 	height: 0;
-	border-top: 10px solid transparent;
-	border-bottom: 10px solid transparent;
+	border-top: 7px solid transparent;
+	border-bottom: 7px solid transparent;
 }
 
 .arrow.left {
@@ -113,8 +125,11 @@ body {
 #search_options {
 	display: none;
 	border: 1px solid #ddd;
-	padding: 5px;
+	padding: 10px 5px;
 	font-size: 0.8em;
+}
+#search_options > div {
+	margin: 5px 0;
 }
 
 #search_options_toggle {
@@ -150,10 +165,25 @@ body {
 }
 
 .email_actions {
-	display: inline-block;
-	position: absolute;
-	right: 0;
-	top: 0;
+	float: right;
+}
+
+.email_actions button {
+	border: none;
+	padding: 0 5px;
+	background-color: #ff8233;
+	color: #fff;
+	cursor: pointer;
+	border-radius: 2px;
+}
+
+.email_actions button:hover {
+	background-color: #ffa871;
+}
+
+.email_title {
+	margin-top: 0;
+	color: #42b983;
 }
 
 .delivered_date {
@@ -191,13 +221,8 @@ body {
 }
 
 .modal-header {
-	position: relative;
 }
 
-.modal-header h3 {
-	margin-top: 0;
-	color: #42b983;
-}
 
 .modal-body {
 	margin: 20px 0;

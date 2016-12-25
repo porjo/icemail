@@ -35,17 +35,15 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 	subject := msg.Header.Get("Subject")
 
 	var addresses []*mail.Address
-	if addresses, err = msg.Header.AddressList("To"); err != nil {
-		return err
-	}
-
-	if isWhitelisted(addresses) {
-		err = sendMail(data, *msg)
-		if err != nil {
-			return err
+	if addresses, err = msg.Header.AddressList("To"); err == nil {
+		if isWhitelisted(addresses) {
+			err = sendMail(data, *msg)
+			if err != nil {
+				return err
+			}
+			log.Printf("Email passed due to whitelisting To: '%s', From: '%s', Subject: '%s'\n", to[0], from, subject)
+			return nil
 		}
-		log.Printf("Email passed due to whitelisting To: '%s', From: '%s', Subject: '%s'\n", to[0], from, subject)
-		return nil
 	}
 
 	// Make sure header field has a valid date so it can be expired later

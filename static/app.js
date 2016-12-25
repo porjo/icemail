@@ -33,10 +33,10 @@ $(function() {
 				locations: fields,
 			},
 			modal: {
-				Title: '',
-				Body: '',
-				ID: 0,
-				Delivered: '',
+				title: '',
+				body: '',
+				id: 0,
+				delivered: '',
 			}
 		},
 
@@ -45,6 +45,11 @@ $(function() {
 		},
 
 		methods: {
+			pageActive: function(n) {
+				var page = Math.ceil(this.result.offset / this.request.limit) + 1;
+				var val = (n == page);
+				return {active: val}
+			},
 
 			closeModal: function() {
 				$("body").removeClass('modal-open');
@@ -65,13 +70,13 @@ $(function() {
 				var self = this;
 				$("body").addClass('modal-open');
 				$.get(apiURL + '/search/' + id, function(data) {
-					self.modal.Title = data.Emails[0].Header.Subject[0];
-					self.modal.Body = data.Emails[0].Body;
-					self.modal.ID = data.Emails[0].ID;
-					if( typeof data.Emails[0].Delivered != "undefined") {
-						self.modal.Delivered = moment(data.Emails[0].Delivered).format('YYYY-MM-DD');
+					self.modal.title = data.Emails[0].Header.Subject[0];
+					self.modal.body = data.Emails[0].Body;
+					self.modal.id = data.Emails[0].ID;
+					if( typeof data.Emails[0].delivered != "undefined") {
+						self.modal.delivered = moment(data.Emails[0].Delivered).format('YYYY-MM-DD');
 					} else {
-						self.modal.Delivered = '';
+						self.modal.delivered = '';
 					}
 					self.showModal = true;
 				});
@@ -81,7 +86,7 @@ $(function() {
 				$('#search_options').slideToggle();
 			},
 
-			searchMsg: function(direction) {
+			searchMsg: function(direction, pageNo) {
 				var self = this;
 
 				var request = $.extend({}, this.request);
@@ -96,6 +101,10 @@ $(function() {
 					var offset = 0;
 					if(direction == 'back') {
 						offset = this.result.offset - request.limit;
+					} else if(direction == 'page') {
+						if( typeof pageNo !== "undefined" ) {
+							offset = request.limit * (pageNo-1);
+						}
 					} else {
 						offset = this.result.offset + request.limit;
 					}
@@ -118,6 +127,7 @@ $(function() {
 						self.result.emails = data.Emails;
 						self.result.total = data.Total;
 						self.result.offset = data.Offset;
+						self.result.pages = Math.ceil( data.Total / self.request.limit );
 					}
 				});
 			}

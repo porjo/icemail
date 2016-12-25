@@ -112,7 +112,16 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if searchRequest.Query == "" {
 		matchQuery = bleve.NewMatchAllQuery()
 	} else {
-		matchQuery = query.NewMatchQuery(searchRequest.Query)
+		tmpQuery := query.NewMatchQuery(searchRequest.Query)
+		tmpQuery.SetFuzziness(2)
+		tmpQuery.SetPrefix(3)
+		/*
+			for _, field := range searchRequest.Locations {
+				fmt.Printf("setfield %s\n", field)
+				tmpQuery.SetField(locationsBase + field)
+			}
+		*/
+		matchQuery = tmpQuery
 	}
 	if !searchRequest.StartTime.IsZero() || !searchRequest.EndTime.IsZero() {
 		dateTimeQuery := query.NewDateRangeQuery(
@@ -193,21 +202,22 @@ func doSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody
 	}
 
 	emails := make([]Email, 0)
-
 	for _, hit := range searchResult.Hits {
 		if len(hRequest.Locations) > 0 && len(hit.Locations) > 0 {
 			found := false
 			for _, inLoc := range hRequest.Locations {
 				for outLoc, _ := range hit.Locations {
+					//	fmt.Printf("%s == %s\n", locationsBase+inLoc, outLoc)
 					if locationsBase+inLoc == outLoc {
 						found = true
 						goto locBreak
+
 					}
 				}
 			}
 		locBreak:
 			if !found {
-				break
+				continue
 			}
 		}
 
