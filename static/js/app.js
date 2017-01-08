@@ -73,7 +73,8 @@ $(function() {
 					self.modal.title = data.Emails[0].Header.Subject[0];
 					self.modal.body = data.Emails[0].Body;
 					self.modal.id = data.Emails[0].ID;
-					if( typeof data.Emails[0].delivered != "undefined") {
+					console.log(data);
+					if( typeof data.Emails[0].Delivered != "undefined") {
 						self.modal.delivered = moment(data.Emails[0].Delivered).format('YYYY-MM-DD');
 					} else {
 						self.modal.delivered = '';
