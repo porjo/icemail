@@ -1,18 +1,10 @@
-body {
-	font-family: Helvetica, Arial, Sans-Serif;
-	color: #333;
-}
-
-.container {
-	margin: 0 auto;
-	max-width: 1400px;
-}
 
 .message_list {
 	width: 100%;
 	border-collapse: collapse;
 }
 
+/*
 .message_list td {
 	padding: 0 5px;
 }
@@ -43,6 +35,7 @@ body {
 .message_list tr:hover {
 	background-color: #FFF1DA;
 }
+*/
 
 #logo {
 	float: right;
