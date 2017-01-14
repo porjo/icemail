@@ -1,10 +1,10 @@
 
+/*
 .message_list {
 	width: 100%;
 	border-collapse: collapse;
 }
 
-/*
 .message_list td {
 	padding: 0 5px;
 }
@@ -36,6 +36,9 @@
 	background-color: #FFF1DA;
 }
 */
+.message_list tbody tr {
+	cursor: pointer;
+}
 
 #logo {
 	float: right;
@@ -117,12 +120,6 @@
 
 #search_options {
 	display: none;
-	border: 1px solid #ddd;
-	padding: 10px 5px;
-	font-size: 0.8em;
-}
-#search_options > div {
-	margin: 5px 0;
 }
 
 #search_options_toggle {
@@ -152,26 +149,6 @@
 	width: 100%;
 	max-height: 400px;
 	overflow-y: auto;
-	border: 1px solid #ddd;
-	border-radius: 2px;
-	padding: 0 10px;
-}
-
-.email_actions {
-	float: right;
-}
-
-.email_actions button {
-	border: none;
-	padding: 0 5px;
-	background-color: #ff8233;
-	color: #fff;
-	cursor: pointer;
-	border-radius: 2px;
-}
-
-.email_actions button:hover {
-	background-color: #ffa871;
 }
 
 .email_title {
@@ -179,8 +156,12 @@
 	color: #42b983;
 }
 
+.email_actions {
+	text-align: right;
+}
+
 .delivered_date {
-	font-size: 0.8em;
+	font-size: 0.9em;
 }
 
 /* Modal Styles */
@@ -202,15 +183,14 @@
 }
 
 .modal-container {
-	width: 600px;
-	max-width: 80hh;
+	width: 1000px;
+	max-width: 80vw;
 	max-height: 80vh;
 	margin: 0px auto;
 	padding: 20px 30px;
 	background-color: #fff;
 	border-radius: 2px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, .33);
-	font-family: Helvetica, Arial, sans-serif;
 }
 
 .modal-header {

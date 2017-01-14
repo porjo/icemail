@@ -11,7 +11,19 @@ var fields = [
 var dateFormat = "ddd, DD MMM YYYY HH:mm:ss Z"
 
 Vue.filter('fromNow', function(value) {
-	return moment(value, dateFormat).fromNow(true);
+	if( moment.isMoment(value) ) {
+		return value.fromNow();
+	} else {
+		return moment(value, dateFormat).fromNow();
+	}
+});
+
+Vue.filter('formatted', function(value) {
+	if( moment.isMoment(value) ) {
+		return value.format(dateFormat);
+	} else {
+		return moment(value, dateFormat).format();
+	}
 });
 
 $(function() {
@@ -75,7 +87,7 @@ $(function() {
 					self.modal.id = data.Emails[0].ID;
 					console.log(data);
 					if( typeof data.Emails[0].Delivered != "undefined") {
-						self.modal.delivered = moment(data.Emails[0].Delivered).format('YYYY-MM-DD HH:mm Z');
+						self.modal.delivered = moment(data.Emails[0].Delivered);
 					} else {
 						self.modal.delivered = '';
 					}

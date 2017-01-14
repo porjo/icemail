@@ -4,6 +4,7 @@
 		<meta charset="UTF-8">
 		<title>IceMail</title>
 		<link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="vendor/fontello/css/fontello.css">
 		<link rel="stylesheet" type="text/css" href="css/app.css">
 	</head>
 	<body>
@@ -11,37 +12,44 @@
 			<div id='logo'>IceMail <img src="img/icemail_logo.png" /></div>
 			<div id="app" v-cloak>
 				<modal v-if="showModal" @close="closeModal">
-				<div slot="header">
-					<div class='email_actions'>
-						<button v-if='modal.delivered == ""' class="modal-sendmail-button" @click="sendMsg(modal.id)">Send Mail</button>
-						<i class='icon-mail'></i><span class='delivered_date' v-if='modal.delivered != ""'>Email was delivered on {{modal.delivered}}</span>
+				<div slot="header" class="row">
+					<div class='email_title col-md-8'>{{modal.title}}</div>
+					<div class='col-md-4 email_actions'>
+						<button v-if='modal.delivered == ""' class="btn btn-info" @click="sendMsg(modal.id)">Send Mail</button>
+						<span class='delivered_date' v-if='modal.delivered != ""'><span class='icon-mail'></span>Email delivered: <span :title='modal.delivered | formatted'>{{modal.delivered | fromNow}}</span></span>
 					</div>
-					<div class='email_title'>{{modal.title}}</div>
 				</div>
-				<div slot="body">
-					<pre class='email_body'>{{modal.body}}</pre>
+				<div slot="body" class="row">
+					<div class="col-md-12">
+						<pre class='panel panel-default email_body'>{{modal.body}}</pre>
+					</div>
 				</div>
 				</modal>
 				<div id='search_bar'>
-					<form class="form-inline">
-						<div class="form-group">
-							<div class="input-group">
-								<div class="input-group-addon"><span class='icon-search'></span></i></div>
-								<input type="search" class="form-control" @keyup.enter="searchMsg()" v-model="request.query" placeholder="search keyword">
+					<div class="form-inline">
+						<input type="search" size=50 class="form-control" @keyup.enter="searchMsg()" v-model="request.query" placeholder="search keyword">
+						<button @click="searchMsg()" class="btn btn-primary"><span class='icon-search'></span>Search</button>
+					</div>
+					<div id='search_options_toggle' @click="toggleSearchOptions()"><span class='icon-cog'></span>Advanced Options</div>
+					<div id='search_options' class='panel panel-default'>
+						<div class='panel-body'>
+							<div class="form-horizontal">
+								<div class="form-group">
+									<label for="searchFields" class="col-md-6 control-label">Search these fields:</label>
+									<div class="col-md-6">
+										<template v-for="field in fields">
+											<input type="checkbox" :value='field' v-model="request.locations">{{field}}
+										</template>
+									</div>
+								</div>
+								<div class="form-group">
+									<label for="dateRange" class="col-md-6 control-label">Search back this many days:</label>
+									<div class='col-md-6'>
+										<input type="text" size=4 v-model="searchDays">&nbsp;(zero is unlimited)
+									</div>
+								</div>
 							</div>
 						</div>
-						<button @click="searchMsg()" class="btn btn-default">Search</button>
-					</form>
-					<div id='search_options_toggle' @click="toggleSearchOptions()"><i class='icon-cog'></i>Advanced Options</div>
-					<div id='search_options'>
-						<div class='label'>Search these fields:</div>
-						<div class='value'>
-							<template v-for="field in fields">
-								<input type="checkbox" :value='field' v-model="request.locations">{{field}}
-							</template>
-						</div>
-						<div class='label'>Search back this many days:</div>
-						<div class='value'><input type="text" size=4 v-model="searchDays">&nbsp;(zero is unlimited)</div>
 					</div>
 				</div>
 				<div class='no_results' v-if='!result.emails.length'>No results</div>
@@ -53,21 +61,25 @@
 						<div class='results_stats'>{{result.emails.length}} results</div>
 					</div>
 				</template>
-				<table class='table table-striped table-hover' v-if="result.emails.length > 0">
-					<tr>
-						<th></th>
-						<th>Subject</th>
-						<th>From</th>
-						<th>To</th>
-						<th>Date</th>
-					</tr>
-					<tr v-for="(email, index) in result.emails" @click="viewMsg(email.ID)">
-						<td class='flag_col'><span class='delivered_flag'><i v-if='email.Delivered' class='icon-mail'></i></span></td>
-						<td>{{ email.Header.Subject[0] }}</td>
-						<td class='fixed_col'>{{ email.Header.From[0] }}</td>
-						<td class='fixed_col'>{{ email.Header.To[0] }}</td>
-						<td class='fixed_col'>{{ email.Header.Date[0] | fromNow }}</td>
-					</tr>
+				<table class='message_list table table-condensed table-striped table-hover' v-if="result.emails.length > 0">
+					<thead>
+						<tr>
+							<th></th>
+							<th>Subject</th>
+							<th>From</th>
+							<th>To</th>
+							<th>Date</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="(email, index) in result.emails" @click="viewMsg(email.ID)">
+							<td class='flag_col'><span class='delivered_flag'><i v-if='email.Delivered' class='icon-mail'></i></span></td>
+							<td>{{ email.Header.Subject[0] }}</td>
+							<td class='fixed_col'>{{ email.Header.From[0] }}</td>
+							<td class='fixed_col'>{{ email.Header.To[0] }}</td>
+							<td class='fixed_col'><span :title='email.Header.Date[0] | formatted'>{{ email.Header.Date[0] | fromNow }}</span></td>
+						</tr>
+					</tbody>
 				</table>
 				<div class='results_bar' v-if='result.emails.length && result.pages > 1'>
 					<div class='results_action' @click="searchMsg('back')">
@@ -110,7 +122,7 @@
 
 			  <div class="modal-footer">
 			    <slot name="footer">
-			      <button class="modal-default-button" @click="$emit('close')">OK</button>
+			      <button class="btn btn-default modal-default-button" @click="$emit('close')">OK</button>
 			    </slot>
 			  </div>
 			</div>
@@ -121,7 +133,6 @@
 		<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/vue/2.1.4/vue.min.js"></script>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.1/moment.min.js"></script>
-		<script src="vendor/bootstrap/js/bootstrap.min.js"></script>
 		<script src="js/app.js"></script>
 	</body>
 </html>
