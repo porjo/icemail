@@ -231,6 +231,7 @@ func doSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody
 				return hResult, err
 			}
 			lr := Email{ID: hit.ID, Header: msg.Header}
+
 			if includeBody {
 				lr.Body = v
 			}

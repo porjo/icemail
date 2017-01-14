@@ -3,6 +3,7 @@
 	<head>
 		<meta charset="UTF-8">
 		<title>IceMail</title>
+		<link rel="stylesheet" type="text/css" href="vendor/fontello/css/fontello.css">
 		<link rel="stylesheet" type="text/css" href="css/app.css">
 	</head>
 	<body>
@@ -13,7 +14,7 @@
 				<div slot="header">
 					<div class='email_actions'>
 						<button v-if='modal.delivered == ""' class="modal-sendmail-button" @click="sendMsg(modal.id)">Send Mail</button>
-						<span class='delivered_date' v-if='modal.delivered != ""'>Email was delivered on {{modal.delivered}}</span>
+						<i class='icon-mail'></i><span class='delivered_date' v-if='modal.delivered != ""'>Email was delivered on {{modal.delivered}}</span>
 					</div>
 					<div class='email_title'>{{modal.title}}</div>
 				</div>
@@ -23,8 +24,8 @@
 				</modal>
 				<div id='search_bar'>
 					<input type="search" size=50 @keyup.enter="searchMsg()" v-model="request.query" placeholder="search keyword">
-					<button @click="searchMsg()">Search</button>
-					<div id='search_options_toggle' @click="toggleSearchOptions()">Advanced Options</div>
+					<button @click="searchMsg()"><i class='icon-search'></i>Search</button>
+					<div id='search_options_toggle' @click="toggleSearchOptions()"><i class='icon-cog'></i>Advanced Options</div>
 					<div id='search_options'>
 						<div class='label'>Search these fields:</div>
 						<div class='value'>
@@ -54,7 +55,7 @@
 						<th>Date</th>
 					</tr>
 					<tr v-for="(email, index) in result.emails" @click="viewMsg(email.ID)">
-						<td class='flag_col'><span class='delivered_flag'><span v-if='email.Delivered'>X</span></span></td>
+						<td class='flag_col'><span class='delivered_flag'><i v-if='email.Delivered' class='icon-mail'></i></span></td>
 						<td>{{ email.Header.Subject[0] }}</td>
 						<td class='fixed_col'>{{ email.Header.From[0] }}</td>
 						<td class='fixed_col'>{{ email.Header.To[0] }}</td>

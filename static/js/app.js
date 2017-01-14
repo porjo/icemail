@@ -75,7 +75,7 @@ $(function() {
 					self.modal.id = data.Emails[0].ID;
 					console.log(data);
 					if( typeof data.Emails[0].Delivered != "undefined") {
-						self.modal.delivered = moment(data.Emails[0].Delivered).format('YYYY-MM-DD');
+						self.modal.delivered = moment(data.Emails[0].Delivered).format('YYYY-MM-DD HH:mm Z');
 					} else {
 						self.modal.delivered = '';
 					}
