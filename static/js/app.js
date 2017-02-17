@@ -75,6 +75,7 @@ $(function() {
 			},
 
 			viewMsg: function(id) {
+				// ignore click if mouse selected
 				var haveSel = getSelection().toString().length > 0;
 				if( haveSel ) {
 					return;
