@@ -2,8 +2,11 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
 		<title>IceMail</title>
-		<link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
 		<link rel="stylesheet" type="text/css" href="vendor/fontello/css/fontello.css">
 		<link rel="stylesheet" type="text/css" href="css/app.css">
 	</head>
@@ -15,7 +18,7 @@
 			</div>
 			<template id='message-view'>
 				<div> <!-- root node -->
-					<router-link :to="{name: 'home'}">Home</router-link>
+					<router-link :to="{name: 'search'}" class='search-link'><span class='icon-left-open-big'></span>Back</router-link>
 					<div class="row" id='message-view-header'>
 						<div class='email_title col-md-8'>{{modal.title}}</div>
 						<div class='col-md-4 email_actions'>
@@ -34,8 +37,12 @@
 				<div> <!-- root node -->
 					<div id='search_bar'>
 						<div class="form-inline">
-							<input type="search" size=50 class="form-control" @keyup.enter="searchMsg()" v-model="request.query" placeholder="search keyword">
-							<button @click="searchMsg()" class="btn btn-primary"><span class='icon-search'></span>Search</button>
+							<input type="search" size=50 class="form-control" @keyup.enter="searchQuery()" v-model="request.query" placeholder="search keyword">
+							<button @click="searchQuery()" class="btn btn-primary"><span class='icon-search'></span>Search</button>
+						</div>
+						<div class="alert alert-danger" v-if="result.error">
+							 <span class="close" @click="resetError">&times;</span>
+							 <strong>Error:</strong>&nbsp;{{result.error}}
 						</div>
 						<div id='search_options_toggle' @click="toggleSearchOptions()"><span class='icon-cog'></span>Advanced Options</div>
 						<div id='search_options' class='panel panel-default'>
@@ -89,22 +96,20 @@
 						</tbody>
 					</table>
 					<div class='results_bar' v-if='result.emails.length && result.pages > 1'>
-						<div class='results_action' @click="searchMsg('back')">
-							<div v-if='result.offset > 0' class='arrow left'></div>
-						</div>
+						<router-link v-if='result.offset > 0' :to="{name: 'search', query: {query: request.query, page: currentPage()-1}}" class='results_action'><span class='icon-left-open-big'><span></router-link>
 						<template v-if='result.pages <= 5' v-for="n in result.pages">
-							<span class='results_page' :class='pageActive(n)' @click="searchMsg('page', n)">{{n}}</span>
+							<router-link :to="{name: 'search', query: {query: request.query, page: n}}" :class='pageActive(n)' class='results_page'>{{n}}</router-link>
 						</template>
-						<template v-if='result.pages > 3'>
+						<template v-if='result.pages > 5'>
 							<template v-for="n in 3">
-								<span class='results_page' :class='pageActive(n)' @click="searchMsg('page', n)">{{n}}</span>
+								<router-link :to="{name: 'search', query: {query: request.query, page: n}}" :class='pageActive(n)' class='results_page'>{{n}}</router-link>
 							</template>
 							...
-							<span class='results_page' :class='pageActive(result.pages-1)' @click="searchMsg('page', result.pages-1)">{{result.pages-1}}</span>
-							<span class='results_page' :class='pageActive(result.pages)' @click="searchMsg('page', result.pages)">{{result.pages}}</span>
+							<router-link :to="{name: 'search', query: {query: request.query, page: result.pages-1}}" :class='pageActive(result.pages-1)' class='results_page'>{{result.pages-1}}</router-link>
+							<router-link :to="{name: 'search', query: {query: request.query, page: result.pages}}" :class='pageActive(result.pages)' class='results_page'>{{result.pages}}</router-link>
 						</template>
-						<div class='results_action' @click="searchMsg('fwd')">
-							<div v-if='result.offset + result.emails.length < result.total' class='arrow right'></div>
+						<div class='results_action'>
+							<router-link v-if='result.offset + result.emails.length < result.total' :to="{name: 'search', query: {query: request.query, page: currentPage()+1}}" class='results_action'><span class='icon-right-open-big'><span></router-link>
 						</div>
 					</div>
 				</div>

@@ -10,6 +10,7 @@ import (
 	"net/mail"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/blevesearch/bleve"
 	bleveHttp "github.com/blevesearch/bleve/http"
@@ -18,6 +19,9 @@ import (
 )
 
 const ResultLimit = 100
+
+const SearchPrefixLen = 3
+const SearchFuzziness = 2
 
 type MailHandler struct{}
 type SearchDocHandler struct{}
@@ -113,14 +117,12 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		matchQuery = bleve.NewMatchAllQuery()
 	} else {
 		tmpQuery := query.NewMatchQuery(searchRequest.Query)
-		tmpQuery.SetFuzziness(2)
-		tmpQuery.SetPrefix(3)
-		/*
-			for _, field := range searchRequest.Locations {
-				fmt.Printf("setfield %s\n", field)
-				tmpQuery.SetField(locationsBase + field)
-			}
-		*/
+		tmpQuery.SetFuzziness(SearchFuzziness)
+		if utf8.RuneCountInString(searchRequest.Query) <= SearchPrefixLen {
+			http.Error(w, fmt.Sprintf("query string too short"), 400)
+			return
+		}
+		tmpQuery.SetPrefix(SearchPrefixLen)
 		matchQuery = tmpQuery
 	}
 	if !searchRequest.StartTime.IsZero() || !searchRequest.EndTime.IsZero() {

@@ -1,7 +1,7 @@
 $(function() {
 	const apiURL = '//localhost:8080/api';
 
-	const msgLimit = 35;
+	const msgLimit = 15;
 
 	const fields = [
 		"From",
@@ -70,24 +70,47 @@ $(function() {
 
 		data: function() {
 			return {
-				request: this.$parent.request,
+				request: {
+					query: "",
+					limit: msgLimit,
+					offset: 0,
+					locations: fields,
+				},
 				searchDays: 0,
 				result: {
 					emails: [],
 					total: 0,
-					offset: 0
+					offset: 0,
+					error: ''
 				},
 				fields: fields
 			}
 		},
 
+		watch: {
+			'$route': 'searchMsg'
+		},
+
 		created: function () {
+			if(this.$route.query.query != '')
+				this.request.query = this.$route.query.query;
+
 			this.searchMsg()
 		},
 
 		methods: {
+
+			resetError: function() {
+				this.result.error = '';
+			},
+
+			currentPage: function() {
+				return Math.ceil(this.result.offset / this.request.limit) + 1;
+			},
+
+			// used to set active CSS class
 			pageActive: function(n) {
-				var page = Math.ceil(this.result.offset / this.request.limit) + 1;
+				var page = this.currentPage();
 				var val = (n == page);
 				return {active: val}
 			},
@@ -111,9 +134,18 @@ $(function() {
 				$('#search_options').slideToggle();
 			},
 
-			searchMsg: function(direction, pageNo) {
+			searchQuery: function() {
+				if(this.request.query != '')
+					router.push({ name: 'search', query: {query: this.request.query}});
+				else
+					router.push({ name: 'search', query: {}});
+			},
+
+			searchMsg: function() {
 
 				var request = $.extend({}, this.request);
+
+				this.resetError();
 
 				if( this.searchDays > 0) {
 					var startTime = new Date();
@@ -121,23 +153,8 @@ $(function() {
 					request.starttime = startTime.toISOString();
 				}
 
-				if( typeof direction !== "undefined" ) {
-					var offset = 0;
-					if(direction == 'back') {
-						offset = this.result.offset - request.limit;
-					} else if(direction == 'page') {
-						if( typeof pageNo !== "undefined" ) {
-							offset = request.limit * (pageNo-1);
-						}
-					} else {
-						offset = this.result.offset + request.limit;
-					}
-					if( offset < 0  || offset > this.result.total ) {
-						// abort search out of limits
-						return;
-					} else {
-						request.offset = offset;
-					}
+				if( this.$route.query.page !== "undefined" ) {
+					request.offset = request.limit * (this.$route.query.page-1);
 				}
 
 				var self = this;
@@ -153,6 +170,9 @@ $(function() {
 						self.result.total = data.Total;
 						self.result.offset = data.Offset;
 						self.result.pages = Math.ceil( data.Total / request.limit );
+					},
+					error: function (xhr, ajaxOptions, thrownError) {
+						self.result.error = xhr.responseText;
 					}
 				});
 			}
@@ -160,26 +180,17 @@ $(function() {
 	});
 
 	const routes = [
-		{ name: 'home', path: '/', component: List },
+		{ name: 'search', path: '/', component: List },
 		{ name: 'message', path: '/message/:id', component: Message }
 	];
 
 	const router = new VueRouter({
-		routes
+		routes: routes,
 	});
 
 	const App = new Vue({
 		router,
-		data: {
-			request: {
-				query: "",
-				limit: msgLimit,
-				offset: 0,
-				locations: fields,
-			},
-		},
 	}).$mount('#app');
-
 
 	function cleanData(data) {
 		$.each(data.Emails, function(k,v) {
