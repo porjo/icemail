@@ -135,10 +135,15 @@ $(function() {
 			},
 
 			searchQuery: function() {
-				if(this.request.query != '')
-					router.push({ name: 'search', query: {query: this.request.query}});
-				else
+				if(this.request.query != '') {
+					if(this.request.query == this.$route.query.query) {
+						this.searchMsg();
+					} else {
+						router.push({ name: 'search', query: {query: this.request.query}});
+					}
+				} else {
 					router.push({ name: 'search', query: {}});
+				}
 			},
 
 			searchMsg: function() {

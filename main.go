@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/smtp"
+	"os"
 
 	"github.com/blevesearch/bleve"
 	"github.com/porjo/icemail/smtpd"
@@ -30,12 +31,17 @@ func main() {
 	// try opening index, otherwise try creating new
 	index, err = bleve.Open(indexDir)
 	if err != nil {
+		// if the index exists but couldn't be opened, don't proceed
+		if _, err2 := os.Stat(indexDir); err2 == nil {
+			log.Fatalf("Error opening index '%s': %s\n", indexDir, err)
+		}
+
 		fmt.Printf("Creating database '%s'\n", indexDir)
 
 		mapping := buildIndexMapping()
 		index, err = bleve.New(indexDir, mapping)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("Error creating index '%s': %s\n", indexDir, err)
 		}
 	} else {
 		fmt.Printf("Loading database '%s'\n", indexDir)
@@ -43,7 +49,7 @@ func main() {
 
 	// sanity check
 	if config.SMTPServerAddr == config.SMTPBindAddr {
-		log.Fatalf("SMTP server and bind address cannot be the same!\n")
+		log.Fatal("SMTP server and bind address cannot be the same!")
 	}
 
 	//Test SMTP server connection

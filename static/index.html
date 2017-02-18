@@ -18,7 +18,7 @@
 			</div>
 			<template id='message-view'>
 				<div> <!-- root node -->
-					<router-link :to="{name: 'search'}" class='search-link'><span class='icon-left-open-big'></span>Back</router-link>
+					<router-link :to="{name: 'search'}" class='back-link'><span class='icon-left-open-big'></span>Back</router-link>
 					<div class="row" id='message-view-header'>
 						<div class='email_title col-md-8'>{{modal.title}}</div>
 						<div class='col-md-4 email_actions'>
@@ -41,8 +41,8 @@
 							<button @click="searchQuery()" class="btn btn-primary"><span class='icon-search'></span>Search</button>
 						</div>
 						<div class="alert alert-danger" v-if="result.error">
-							 <span class="close" @click="resetError">&times;</span>
-							 <strong>Error:</strong>&nbsp;{{result.error}}
+							<span class="close" @click="resetError">&times;</span>
+							<strong>Error:</strong>&nbsp;{{result.error}}
 						</div>
 						<div id='search_options_toggle' @click="toggleSearchOptions()"><span class='icon-cog'></span>Advanced Options</div>
 						<div id='search_options' class='panel panel-default'>
@@ -66,7 +66,7 @@
 							</div>
 						</div>
 					</div>
-					<div class='no_results' v-if='!result.emails.length'>No results</div>
+					<div class='no-results' v-if='!result.emails.length'>No results</div>
 					<template v-if='result.emails.length'>
 						<div class='results_bar' v-if='result.pages > 1'>
 							<div class='results_stats'>{{ result.offset + 1 }} to {{ result.offset + result.emails.length }} of {{result.total}} results</div>
@@ -95,21 +95,21 @@
 							</tr>
 						</tbody>
 					</table>
-					<div class='results_bar' v-if='result.emails.length && result.pages > 1'>
-						<router-link v-if='result.offset > 0' :to="{name: 'search', query: {query: request.query, page: currentPage()-1}}" class='results_action'><span class='icon-left-open-big'><span></router-link>
-						<template v-if='result.pages <= 5' v-for="n in result.pages">
-							<router-link :to="{name: 'search', query: {query: request.query, page: n}}" :class='pageActive(n)' class='results_page'>{{n}}</router-link>
-						</template>
-						<template v-if='result.pages > 5'>
-							<template v-for="n in 3">
+					<div id='results_bar' v-if='result.emails.length && result.pages > 1'>
+						<router-link v-if='result.offset > 0' :to="{name: 'search', query: {query: request.query, page: currentPage()-1}}" id='results-page-back'><span class='icon-left-open-big'><span></router-link>
+						<router-link v-if='result.offset + result.emails.length < result.total' :to="{name: 'search', query: {query: request.query, page: currentPage()+1}}" id='results-page-fwd'><span class='icon-right-open-big'><span></router-link>
+						<div id='results_pages'>
+							<template v-if='result.pages <= 5' v-for="n in result.pages">
 								<router-link :to="{name: 'search', query: {query: request.query, page: n}}" :class='pageActive(n)' class='results_page'>{{n}}</router-link>
 							</template>
-							...
-							<router-link :to="{name: 'search', query: {query: request.query, page: result.pages-1}}" :class='pageActive(result.pages-1)' class='results_page'>{{result.pages-1}}</router-link>
-							<router-link :to="{name: 'search', query: {query: request.query, page: result.pages}}" :class='pageActive(result.pages)' class='results_page'>{{result.pages}}</router-link>
-						</template>
-						<div class='results_action'>
-							<router-link v-if='result.offset + result.emails.length < result.total' :to="{name: 'search', query: {query: request.query, page: currentPage()+1}}" class='results_action'><span class='icon-right-open-big'><span></router-link>
+							<template v-if='result.pages > 5'>
+								<template v-for="n in 3">
+									<router-link :to="{name: 'search', query: {query: request.query, page: n}}" :class='pageActive(n)' class='results_page'>{{n}}</router-link>
+								</template>
+								...
+								<router-link :to="{name: 'search', query: {query: request.query, page: result.pages-1}}" :class='pageActive(result.pages-1)' class='results_page'>{{result.pages-1}}</router-link>
+								<router-link :to="{name: 'search', query: {query: request.query, page: result.pages}}" :class='pageActive(result.pages)' class='results_page'>{{result.pages}}</router-link>
+							</template>
 						</div>
 					</div>
 				</div>

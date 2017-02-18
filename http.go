@@ -116,14 +116,19 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if searchRequest.Query == "" {
 		matchQuery = bleve.NewMatchAllQuery()
 	} else {
-		tmpQuery := query.NewMatchQuery(searchRequest.Query)
-		tmpQuery.SetFuzziness(SearchFuzziness)
-		if utf8.RuneCountInString(searchRequest.Query) <= SearchPrefixLen {
-			http.Error(w, fmt.Sprintf("query string too short"), 400)
-			return
+		if strings.Contains(searchRequest.Query, " ") {
+			tmpQuery := query.NewMatchPhraseQuery(searchRequest.Query)
+			matchQuery = tmpQuery
+		} else {
+			tmpQuery := query.NewMatchQuery(searchRequest.Query)
+			tmpQuery.SetFuzziness(SearchFuzziness)
+			if utf8.RuneCountInString(searchRequest.Query) <= SearchPrefixLen {
+				http.Error(w, fmt.Sprintf("query string too short"), 400)
+				return
+			}
+			tmpQuery.SetPrefix(SearchPrefixLen)
+			matchQuery = tmpQuery
 		}
-		tmpQuery.SetPrefix(SearchPrefixLen)
-		matchQuery = tmpQuery
 	}
 	if !searchRequest.StartTime.IsZero() || !searchRequest.EndTime.IsZero() {
 		dateTimeQuery := query.NewDateRangeQuery(
