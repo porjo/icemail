@@ -116,20 +116,39 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if searchRequest.Query == "" {
 		matchQuery = bleve.NewMatchAllQuery()
 	} else {
-		if strings.Contains(searchRequest.Query, " ") {
-			tmpQuery := query.NewMatchPhraseQuery(searchRequest.Query)
-			matchQuery = tmpQuery
-		} else {
-			tmpQuery := query.NewMatchQuery(searchRequest.Query)
-			tmpQuery.SetFuzziness(SearchFuzziness)
-			if utf8.RuneCountInString(searchRequest.Query) <= SearchPrefixLen {
-				http.Error(w, fmt.Sprintf("query string too short"), 400)
-				return
-			}
-			tmpQuery.SetPrefix(SearchPrefixLen)
-			matchQuery = tmpQuery
+		locQueries := make([]query.Query, 0)
+
+		if len(searchRequest.Locations) == 0 {
+			searchRequest.Locations = append(searchRequest.Locations, "")
 		}
+
+		for _, location := range searchRequest.Locations {
+
+			if strings.Contains(searchRequest.Query, " ") {
+				tmpQuery := query.NewMatchPhraseQuery(searchRequest.Query)
+				if location != "" {
+					tmpQuery.SetField(locationsBase + location)
+				}
+				matchQuery = tmpQuery
+			} else {
+				if utf8.RuneCountInString(searchRequest.Query) <= SearchPrefixLen {
+					http.Error(w, fmt.Sprintf("query string too short"), 400)
+					return
+				}
+				tmpQuery := query.NewMatchQuery(searchRequest.Query)
+				tmpQuery.SetFuzziness(SearchFuzziness)
+				tmpQuery.SetPrefix(SearchPrefixLen)
+				if location != "" {
+					tmpQuery.SetField(locationsBase + location)
+				}
+				matchQuery = tmpQuery
+			}
+
+			locQueries = append(locQueries, matchQuery)
+		}
+		matchQuery = query.NewDisjunctionQuery(locQueries)
 	}
+
 	if !searchRequest.StartTime.IsZero() || !searchRequest.EndTime.IsZero() {
 		dateTimeQuery := query.NewDateRangeQuery(
 			searchRequest.StartTime,
@@ -210,23 +229,6 @@ func doSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody
 
 	emails := make([]Email, 0)
 	for _, hit := range searchResult.Hits {
-		if len(hRequest.Locations) > 0 && len(hit.Locations) > 0 {
-			found := false
-			for _, inLoc := range hRequest.Locations {
-				for outLoc, _ := range hit.Locations {
-					//	fmt.Printf("%s == %s\n", locationsBase+inLoc, outLoc)
-					if locationsBase+inLoc == outLoc {
-						found = true
-						goto locBreak
-
-					}
-				}
-			}
-		locBreak:
-			if !found {
-				continue
-			}
-		}
 
 		if hRequest.Limit > 0 && len(emails) == hRequest.Limit {
 			break
