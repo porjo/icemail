@@ -2,7 +2,8 @@ smtp_bind_addr = "127.0.0.1:2525"
 http_bind_addr = "127.0.0.1:8080"
 http_static_dir = "static"
 
-smtp_server_addr = "127.0.0.1:25"
+smtp_server_host = "127.0.0.1"
+smtp_server_port = "25"
 smtp_server_username = ""
 smtp_server_password = ""
 

@@ -18,9 +18,7 @@ var (
 )
 
 // Handler function called upon successful receipt of an email.
-type Handler interface {
-	HandleMessage(net.Addr, string, []string, []byte)
-}
+type Handler func(remoteAddr net.Addr, from string, to []string, data []byte)
 
 // ListenAndServe listens on the TCP network address addr
 // and then calls Serve with handler to handle requests
@@ -186,7 +184,9 @@ loop:
 			s.writef("250 Ok: queued")
 
 			// Pass mail on to handler.
-			go s.srv.Handler.HandleMessage(s.conn.RemoteAddr(), from, to, buffer.Bytes())
+			if s.srv.Handler != nil {
+				go s.srv.Handler(s.conn.RemoteAddr(), from, to, buffer.Bytes())
+			}
 
 			// Reset for next mail.
 			from = ""

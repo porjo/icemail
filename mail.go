@@ -15,10 +15,39 @@ import (
 	"github.com/blevesearch/bleve/search/query"
 )
 
-type mailHandler func(net.Addr, string, []string, []byte) error
+var mailSender EmailSender
 
-func (fn mailHandler) HandleMessage(origin net.Addr, from string, to []string, data []byte) {
-	if err := fn(origin, from, to, data); err != nil {
+type EmailSender interface {
+	Send(to []string, from string, body []byte) error
+}
+
+type emailSender struct {
+	conf MailConfig
+	send func(string, smtp.Auth, string, []string, []byte) error
+}
+
+type MailConfig struct {
+	Username   string
+	Password   string
+	ServerAddr string
+
+	auth smtp.Auth
+}
+
+func NewEmailSender(conf MailConfig) (EmailSender, error) {
+	var host string
+	var err error
+	if host, _, err = net.SplitHostPort(config.SMTPServerAddr); err != nil {
+		return nil, fmt.Errorf("error parsing SMTPServerAddr: %s", err)
+	}
+	if conf.Username != "" && conf.Password != "" {
+		conf.auth = smtp.PlainAuth("", conf.Username, conf.Password, host)
+	}
+	return &emailSender{conf, smtp.SendMail}, nil
+}
+
+func HandleMessage(origin net.Addr, from string, to []string, data []byte) {
+	if err := handleMessage(origin, from, to, data); err != nil {
 		log.Println(err)
 	}
 }
@@ -121,15 +150,7 @@ func sendMail(data []byte, msg mail.Message) error {
 	to := msg.Header["To"]
 	from := msg.Header.Get("From")
 
-	var host string
-	if host, _, err = net.SplitHostPort(config.SMTPServerAddr); err != nil {
-		return err
-	}
-	var auth smtp.Auth
-	if config.SMTPServerUsername != "" && config.SMTPServerPassword != "" {
-		auth = smtp.PlainAuth("", config.SMTPServerUsername, config.SMTPServerPassword, host)
-	}
-	if err = smtp.SendMail(config.SMTPServerAddr, auth, from, to, data); err != nil {
+	if err = mailSender.Send(to, from, data); err != nil {
 		return err
 	} else {
 		subject := msg.Header.Get("Subject")
@@ -155,4 +176,8 @@ func isWhitelisted(emails []*mail.Address) bool {
 		}
 	}
 	return false
+}
+
+func (e *emailSender) Send(to []string, from string, body []byte) error {
+	return e.send(e.conf.ServerAddr, e.conf.auth, from, to, body)
 }

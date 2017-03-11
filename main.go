@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/blevesearch/bleve"
-	"github.com/porjo/icemail/smtpd"
+	"github.com/mhale/smtpd"
 )
 
 var (
@@ -52,6 +52,15 @@ func main() {
 		log.Fatal("SMTP server and bind address cannot be the same!")
 	}
 
+	mailConfig := MailConfig{
+		Username:   config.SMTPServerUsername,
+		Password:   config.SMTPServerPassword,
+		ServerAddr: config.SMTPServerAddr,
+	}
+	if mailSender, err = NewEmailSender(mailConfig); err != nil {
+		log.Fatalf("Error configuring email settings: %s\n", err)
+	}
+
 	//Test SMTP server connection
 	var c *smtp.Client
 	if c, err = smtp.Dial(config.SMTPServerAddr); err != nil {
@@ -63,7 +72,7 @@ func main() {
 	go httpServer()
 
 	fmt.Printf("SMTP server listening on %s\n", config.SMTPBindAddr)
-	smtpd.ListenAndServe(config.SMTPBindAddr, mailHandler(handleMessage), appName, "")
+	smtpd.ListenAndServe(config.SMTPBindAddr, HandleMessage, appName, "")
 }
 
 /*

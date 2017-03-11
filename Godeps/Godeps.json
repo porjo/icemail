@@ -190,6 +190,10 @@
 			"Rev": "147a95f5e36a65f1c7b29440b9b0283aab154693"
 		},
 		{
+			"ImportPath": "github.com/mhale/smtpd",
+			"Rev": "7ffbdfd028f54ca78b0f6265e5f4bc8a8dcf562f"
+		},
+		{
 			"ImportPath": "github.com/steveyen/gtreap",
 			"Rev": "0abe01ef9be25c4aedc174758ec2d917314d6d70"
 		},
