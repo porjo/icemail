@@ -1,6 +1,6 @@
 # Icemail
 
-**Work in progress - not ready for use**
+**Work in progress**
 
 Email catcher for development environments. Solves the problem of test emails becoming a nuisance to developers and customers.
 
