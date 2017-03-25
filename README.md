@@ -9,6 +9,19 @@ Email catcher for development environments. Solves the problem of test emails be
 - single binary which does everything: mail server, mail client, web server
 - easy to install and configure
 
+## Setup
+
+- download tar file from [releases](https://github.com/porjo/icemail/releases) page and unpack somewhere convenient
+- edit `config.toml` to suit
+- run with `./icemail -c config.toml`
+- point browser at `http://localhost:8080`
+
+By default, icemail will:
+
+- listen on port `:2525` for SMTP connections
+- listen on port `:8080` for HTTP client connections
+- forward outbound email to localhost on port `:25`
+
 ## Credits
 
 - Inspired by [MailHog](https://github.com/mailhog/MailHog/) which in turn was inspired by [MailCatcher](http://mailcatcher.me/)
