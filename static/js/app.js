@@ -36,7 +36,7 @@ $(function() {
 					body: '',
 					id: 0,
 					delivered: '',
-				}
+				},
 			}
 		},
 
@@ -88,14 +88,21 @@ $(function() {
 		},
 
 		watch: {
-			'$route': 'searchMsg'
+			'$route' (to, from) {
+				if(to.fullPath != from.fullPath) {
+					this.searchMsg();
+				}
+			}
 		},
 
 		created: function () {
-			if(this.$route.query.query != '')
+			if('request' in this.$route.params) {
+				this.request = this.$route.params.request;
+			} else if(this.$route.query.query != '') {
 				this.request.query = this.$route.query.query;
+			}
 
-			this.searchMsg()
+			this.searchMsg();
 		},
 
 		methods: {
@@ -127,7 +134,8 @@ $(function() {
 				if( haveSel ) {
 					return;
 				}
-				router.push({ name: 'message', params: { id: id }});
+				this.request.offset = this.result.offset
+				router.push({ name: 'message', params: { id: id , request: this.request}});
 			},
 
 			toggleSearchOptions: function() {
@@ -158,7 +166,7 @@ $(function() {
 					request.starttime = startTime.toISOString();
 				}
 
-				if( this.$route.query.page !== "undefined" ) {
+				if( 'page' in this.$route.query ) {
 					request.offset = request.limit * (this.$route.query.page-1);
 				}
 

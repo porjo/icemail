@@ -64,14 +64,15 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 	subject := msg.Header.Get("Subject")
 
 	var addresses []*mail.Address
+	var delivered time.Time
 	if addresses, err = msg.Header.AddressList("To"); err == nil {
 		if isWhitelisted(addresses) {
+			log.Printf("Email whitelisted, To: '%s', From: '%s', Subject: '%s'\n", to[0], from, subject)
 			err = sendMail(data, *msg)
 			if err != nil {
 				return err
 			}
-			log.Printf("Email passed due to whitelisting To: '%s', From: '%s', Subject: '%s'\n", to[0], from, subject)
-			return nil
+			delivered = time.Now()
 		}
 	}
 
@@ -82,7 +83,7 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 		msg.Header["Date"] = []string{now}
 	}
 
-	doc := bleveDoc{Type: "message", Header: msg.Header, Data: string(data)}
+	doc := bleveDoc{Type: "message", Header: msg.Header, Data: string(data), Delivered: delivered}
 
 	id := fmt.Sprintf("%v", time.Now().UnixNano())
 	if err := index.Index(id, doc); err != nil {
@@ -154,7 +155,7 @@ func sendMail(data []byte, msg mail.Message) error {
 		return err
 	} else {
 		subject := msg.Header.Get("Subject")
-		log.Printf("Sending mail, To: '%s', Subject: '%s'\n", to[0], subject)
+		log.Printf("Sending mail, To: '%s', From: '%s', Subject: '%s'\n", to[0], from, subject)
 	}
 
 	return nil
