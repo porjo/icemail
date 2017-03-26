@@ -101,61 +101,66 @@ func itob(v uint64) []byte {
 	return b
 }
 
-func sendMailDoc(hRequest SearchRequest, docID string) error {
+func sendMailDoc(hRequest SearchRequest, docID string) (int, error) {
 	docQuery := query.NewDocIDQuery([]string{docID})
 
 	bRequest := bleve.NewSearchRequest(docQuery)
-	bRequest.Fields = []string{"Data"}
+	bRequest.Fields = []string{"Data", "Delivered"}
 
 	searchResult, err := index.Search(bRequest)
 	if err != nil {
-		return fmt.Errorf("error executing query: %v", err)
+		return 500, fmt.Errorf("error executing query: %v", err)
+	}
+
+	var msg *mail.Message
+	if len(searchResult.Hits) != 1 {
+		return 404, fmt.Errorf("mail with ID %s not found", docID)
 	}
 
 	var raw string
-	var delivered time.Time
-	var msg *mail.Message
-	if len(searchResult.Hits) != 1 {
-		return fmt.Errorf("mail with ID %s not found", docID)
-	}
-	hit := searchResult.Hits[0]
 	var ok bool
+	hit := searchResult.Hits[0]
+	if _, ok = hit.Fields["Delivered"].(string); ok {
+		return 400, fmt.Errorf("mail with ID %s already delivered", docID)
+	}
+
 	if raw, ok = hit.Fields["Data"].(string); ok {
 		msg, err = mail.ReadMessage(strings.NewReader(raw))
 		if err != nil {
-			return err
+			return 500, err
 		}
 	} else {
-		return fmt.Errorf("error retrieving document")
+		return 500, fmt.Errorf("error retrieving document")
 	}
 
 	if err = sendMail([]byte(raw), *msg); err != nil {
-		return fmt.Errorf("error sending mail with ID %s: %v", docID, err)
+		return 500, fmt.Errorf("error sending mail with ID %s: %v", docID, err)
 	}
 
-	delivered = time.Now()
+	delivered := time.Now()
 
 	if err = index.Delete(docID); err != nil {
-		return err
+		return 500, err
 	}
 	doc := bleveDoc{Type: "message", Header: msg.Header, Data: raw, Delivered: delivered}
 	if err := index.Index(docID, doc); err != nil {
-		return err
+		return 500, err
 	}
 
-	return nil
+	return 200, nil
 }
 
 func sendMail(data []byte, msg mail.Message) error {
 	var err error
-	to := msg.Header["To"]
+	rcpts := msg.Header["To"]
+	rcpts = append(rcpts, msg.Header["Cc"]...)
 	from := msg.Header.Get("From")
 
-	if err = mailSender.Send(to, from, data); err != nil {
+	if err = mailSender.Send(rcpts, from, data); err != nil {
 		return err
 	} else {
 		subject := msg.Header.Get("Subject")
-		log.Printf("Sending mail, To: '%s', From: '%s', Subject: '%s'\n", to[0], from, subject)
+		log.Printf("Sending mail, Recipients: %s, From: '%s', Subject: '%s'\n", rcpts, from, subject)
 	}
 
 	return nil

@@ -49,13 +49,28 @@ $(function() {
 		},
 
 		methods: {
+			goBack: function() {
+				router.go(-1);
+			},
+
+			sendMsg: function(id) {
+				var self = this;
+				$.get(apiURL + '/mail/' + id, function(data) {
+					if('Success' in data) {
+						if(data.Success) {
+							self.modal.delivered = moment()
+						}
+					}
+				});
+			},
+
 			viewMsg: function() {
 				var self = this;
 				$.get(apiURL + '/search/' + this.$route.params.id, function(data) {
 					self.modal.title = data.Emails[0].Header.Subject[0];
 					self.modal.body = data.Emails[0].Body;
 					self.modal.id = data.Emails[0].ID;
-					if( typeof data.Emails[0].Delivered != "undefined") {
+					if( 'Delivered' in data.Emails[0] ) {
 						self.modal.delivered = moment(data.Emails[0].Delivered);
 					} else {
 						self.modal.delivered = '';
@@ -96,9 +111,7 @@ $(function() {
 		},
 
 		created: function () {
-			if('request' in this.$route.params) {
-				this.request = this.$route.params.request;
-			} else if(this.$route.query.query != '') {
+			if(this.$route.query.query != '') {
 				this.request.query = this.$route.query.query;
 			}
 
@@ -122,20 +135,13 @@ $(function() {
 				return {active: val}
 			},
 
-			sendMsg: function(id) {
-				var self = this;
-				$.get(apiURL + '/mail/' + id, function(data) {
-				});
-			},
-
 			viewMsg: function(id) {
 				// ignore click if mouse selected
 				var haveSel = getSelection().toString().length > 0;
 				if( haveSel ) {
 					return;
 				}
-				this.request.offset = this.result.offset
-				router.push({ name: 'message', params: { id: id , request: this.request}});
+				router.push({ name: 'message', params: { id: id}});
 			},
 
 			toggleSearchOptions: function() {

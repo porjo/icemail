@@ -18,7 +18,7 @@
 			</div>
 			<template id='message-view'>
 				<div> <!-- root node -->
-					<router-link :to="{name: 'search', params: {request: $route.params.request} }" class='back-link'><span class='icon-left-open-big'></span>Back</router-link>
+					<span @click="goBack()" class='back-link'><span class='icon-left-open-big'></span>Back</span>
 					<div class="row" id='message-view-header'>
 						<div class='email_title col-md-8'>{{modal.title}}</div>
 						<div class='col-md-4 email_actions'>

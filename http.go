@@ -209,15 +209,20 @@ func (h *SearchDocHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func (h *MailHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var err error
+	var httpStatus int
 	var searchRequest SearchRequest
 	docID := mux.Vars(req)["docID"]
 
-	err = sendMailDoc(searchRequest, docID)
+	httpStatus, err = sendMailDoc(searchRequest, docID)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("%s", err), 500)
+		http.Error(w, fmt.Sprintf("%s", err), httpStatus)
 		return
 	}
-	mustEncode(w, nil)
+
+	result := MailResult{}
+	result.Success = true
+
+	mustEncode(w, result)
 }
 
 func doSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody bool) (SearchResult, error) {
