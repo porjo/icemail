@@ -20,6 +20,8 @@ type bleveDoc struct {
 	Recipients []string
 }
 
+var index bleve.Index
+
 // locationsBase is prepended to locations being filtered on
 const locationsBase = "Header."
 

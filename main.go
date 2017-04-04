@@ -10,10 +10,6 @@ import (
 	"github.com/mhale/smtpd"
 )
 
-var (
-	index bleve.Index
-)
-
 func main() {
 	var err error
 
