@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/binary"
 	"fmt"
 	"log"
 	"net"
@@ -95,12 +94,14 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 	return nil
 }
 
+/*
 // itob returns an 8-byte big endian representation of v.
 func itob(v uint64) []byte {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, v)
 	return b
 }
+*/
 
 func sendMailDoc(docID string) (int, error) {
 	docQuery := query.NewDocIDQuery([]string{docID})
@@ -143,7 +144,14 @@ func sendMailDoc(docID string) (int, error) {
 			}
 		}
 	} else {
-		return 400, fmt.Errorf("mail with ID %s has no recipients", docID)
+		// Bleve doesn't handle arrays properly.
+		// A string slice with a single element will be returned as a string.
+		// See: https://github.com/blevesearch/bleve/issues/570
+		if rcpt, ok := hit.Fields["Recipients"].(string); ok {
+			recipients = []string{rcpt}
+		} else {
+			return 400, fmt.Errorf("mail with ID %s has no recipients", docID)
+		}
 	}
 
 	if err = sendMail([]byte(raw), *msg, recipients); err != nil {
