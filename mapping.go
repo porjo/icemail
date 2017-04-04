@@ -15,8 +15,9 @@ type bleveDoc struct {
 	Type   string
 	Header mail.Header
 	// store raw email data
-	Data      string
-	Delivered time.Time
+	Data       string
+	Delivered  time.Time
+	Recipients []string
 }
 
 // locationsBase is prepended to locations being filtered on

@@ -68,7 +68,7 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 	if addresses, err = msg.Header.AddressList("To"); err == nil {
 		if isWhitelisted(addresses) {
 			log.Printf("Email whitelisted, To: '%s', From: '%s', Subject: '%s'\n", to[0], from, subject)
-			err = sendMail(data, *msg)
+			err = sendMail(data, *msg, to)
 			if err != nil {
 				return err
 			}
@@ -83,7 +83,8 @@ func handleMessage(origin net.Addr, from string, to []string, data []byte) error
 		msg.Header["Date"] = []string{now}
 	}
 
-	doc := bleveDoc{Type: "message", Header: msg.Header, Data: string(data), Delivered: delivered}
+	fmt.Printf("handle message to %+v\n", to)
+	doc := bleveDoc{Type: "message", Header: msg.Header, Data: string(data), Delivered: delivered, Recipients: to}
 
 	id := fmt.Sprintf("%v", time.Now().UnixNano())
 	if err := index.Index(id, doc); err != nil {
@@ -101,11 +102,11 @@ func itob(v uint64) []byte {
 	return b
 }
 
-func sendMailDoc(hRequest SearchRequest, docID string) (int, error) {
+func sendMailDoc(docID string) (int, error) {
 	docQuery := query.NewDocIDQuery([]string{docID})
 
 	bRequest := bleve.NewSearchRequest(docQuery)
-	bRequest.Fields = []string{"Data", "Delivered"}
+	bRequest.Fields = []string{"Data", "Delivered", "Recipients"}
 
 	searchResult, err := index.Search(bRequest)
 	if err != nil {
@@ -133,7 +134,19 @@ func sendMailDoc(hRequest SearchRequest, docID string) (int, error) {
 		return 500, fmt.Errorf("error retrieving document")
 	}
 
-	if err = sendMail([]byte(raw), *msg); err != nil {
+	var recipients []string
+	if rcpts, ok := hit.Fields["Recipients"].([]interface{}); ok {
+		recipients = make([]string, 0)
+		for _, r := range rcpts {
+			if rcpt, ok := r.(string); ok {
+				recipients = append(recipients, rcpt)
+			}
+		}
+	} else {
+		return 400, fmt.Errorf("mail with ID %s has no recipients", docID)
+	}
+
+	if err = sendMail([]byte(raw), *msg, recipients); err != nil {
 		return 500, fmt.Errorf("error sending mail with ID %s: %v", docID, err)
 	}
 
@@ -142,7 +155,7 @@ func sendMailDoc(hRequest SearchRequest, docID string) (int, error) {
 	if err = index.Delete(docID); err != nil {
 		return 500, err
 	}
-	doc := bleveDoc{Type: "message", Header: msg.Header, Data: raw, Delivered: delivered}
+	doc := bleveDoc{Type: "message", Header: msg.Header, Data: raw, Delivered: delivered, Recipients: recipients}
 	if err := index.Index(docID, doc); err != nil {
 		return 500, err
 	}
@@ -150,10 +163,8 @@ func sendMailDoc(hRequest SearchRequest, docID string) (int, error) {
 	return 200, nil
 }
 
-func sendMail(data []byte, msg mail.Message) error {
+func sendMail(data []byte, msg mail.Message, rcpts []string) error {
 	var err error
-	rcpts := msg.Header["To"]
-	rcpts = append(rcpts, msg.Header["Cc"]...)
 	from := msg.Header.Get("From")
 
 	if err = mailSender.Send(rcpts, from, data); err != nil {

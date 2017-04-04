@@ -210,10 +210,9 @@ func (h *SearchDocHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (h *MailHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var err error
 	var httpStatus int
-	var searchRequest SearchRequest
 	docID := mux.Vars(req)["docID"]
 
-	httpStatus, err = sendMailDoc(searchRequest, docID)
+	httpStatus, err = sendMailDoc(docID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("%s", err), httpStatus)
 		return
