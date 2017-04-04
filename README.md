@@ -1,5 +1,8 @@
 # Icemail
 
+[![Build Status](https://travis-ci.org/porjo/icemail.svg?branch=master)](https://travis-ci.org/porjo/icemail)
+[![Coverage Status](https://coveralls.io/repos/github/porjo/icemail/badge.svg?branch=master)](https://coveralls.io/github/porjo/icemail?branch=master)
+
 **Work in progress**
 
 Email catcher for development environments. Solves the problem of test emails becoming a nuisance to developers and customers.
