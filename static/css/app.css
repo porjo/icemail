@@ -70,9 +70,14 @@
 	color: #000;
 }
 
+#message-list-container {
+	position: relative;
+}
+
 #search_bar {
-	margin: 40px auto;
+	margin: auto;
 	width: 600px;
+	padding-top: 40px;
 }
 
 #search_bar input[type=search] {
@@ -142,6 +147,22 @@
 	margin-top: 20px;
 	display: inline-block;
 	cursor: pointer;
+}
+
+#message-container {
+	position: relative;
+}
+
+.message-error {
+	position: absolute;
+	right: 0;
+	left: 0;
+}
+
+.message-error .close {
+	position: absolute;
+	right: 20px;
+	float: none;
 }
 
 /*

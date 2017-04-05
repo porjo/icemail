@@ -31,12 +31,11 @@ $(function() {
 		template: '#message-view',
 		data: function() {
 			return {
-				modal: {
-					title: '',
-					body: '',
-					id: 0,
-					delivered: '',
-				},
+				title: '',
+				body: '',
+				id: 0,
+				delivered: '',
+				error: '',
 			}
 		},
 
@@ -53,28 +52,36 @@ $(function() {
 				router.go(-1);
 			},
 
+			resetError: function() {
+				this.error = '';
+			},
+
 			sendMsg: function(id) {
 				var self = this;
 				$.get(apiURL + '/mail/' + id, function(data) {
 					if('Success' in data) {
 						if(data.Success) {
-							self.modal.delivered = moment()
+							self.delivered = moment()
 						}
 					}
+				}).fail( function(xhr, ajaxOptions, thrownError) {
+					self.error = xhr.responseText;
 				});
 			},
 
 			viewMsg: function() {
 				var self = this;
 				$.get(apiURL + '/search/' + this.$route.params.id, function(data) {
-					self.modal.title = data.Emails[0].Header.Subject[0];
-					self.modal.body = data.Emails[0].Body;
-					self.modal.id = data.Emails[0].ID;
+					self.title = data.Emails[0].Header.Subject[0];
+					self.body = data.Emails[0].Body;
+					self.id = data.Emails[0].ID;
 					if( 'Delivered' in data.Emails[0] ) {
-						self.modal.delivered = moment(data.Emails[0].Delivered);
+						self.delivered = moment(data.Emails[0].Delivered);
 					} else {
-						self.modal.delivered = '';
+						self.delivered = '';
 					}
+				}).fail( function(xhr, ajaxOptions, thrownError) {
+					self.error = xhr.responseText;
 				});
 			}
 		}

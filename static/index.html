@@ -17,32 +17,36 @@
 				<router-view></router-view>
 			</div>
 			<template id='message-view'>
-				<div> <!-- root node -->
+				<div id="message-container"> <!-- root node -->
+					<div class="alert alert-danger message-error" v-if="error">
+						<span class="close" @click="resetError">&times;</span>
+						<strong>Error:</strong>&nbsp;{{error}}
+					</div>
 					<span @click="goBack()" class='back-link'><span class='icon-left-open-big'></span>Back</span>
 					<div class="row" id='message-view-header'>
-						<div class='email_title col-md-8'>{{modal.title}}</div>
+						<div class='email_title col-md-8'>{{title}}</div>
 						<div class='col-md-4 email_actions'>
-							<button v-if='modal.delivered == ""' class="btn btn-info" @click="sendMsg(modal.id)">Send Mail</button>
-							<span class='delivered_date' v-if='modal.delivered != ""'><span class='icon-mail'></span>Email delivered: <span :title='modal.delivered | formatted'>{{modal.delivered | fromNow}}</span></span>
+							<button v-if='delivered == ""' class="btn btn-info" @click="sendMsg(id)">Send Mail</button>
+							<span class='delivered_date' v-if='delivered != ""'><span class='icon-mail'></span>Email delivered: <span :title='delivered | formatted'>{{delivered | fromNow}}</span></span>
 						</div>
 					</div>
 					<div class="row">
 						<div class="col-md-12">
-							<pre class='panel panel-default email_body'>{{modal.body}}</pre>
+							<pre class='panel panel-default email_body'>{{body}}</pre>
 						</div>
 					</div>
 				</div>
 			</template>
 			<template id='message-list'>
-				<div> <!-- root node -->
+				<div id='message-list-container'> <!-- root node -->
+					<div class="alert alert-danger message-error" v-if="result.error">
+						<span class="close" @click="resetError">&times;</span>
+						<strong>Error:</strong>&nbsp;{{result.error}}
+					</div>
 					<div id='search_bar'>
 						<div class="form-inline">
 							<input type="search" size=50 class="form-control" @keyup.enter="searchQuery()" v-model="request.query" placeholder="search keyword">
 							<button @click="searchQuery()" class="btn btn-primary"><span class='icon-search'></span>Search</button>
-						</div>
-						<div class="alert alert-danger" v-if="result.error">
-							<span class="close" @click="resetError">&times;</span>
-							<strong>Error:</strong>&nbsp;{{result.error}}
 						</div>
 						<div id='search_options_toggle' @click="toggleSearchOptions()"><span class='icon-cog'></span>Advanced Options</div>
 						<div id='search_options' class='panel panel-default'>
