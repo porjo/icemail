@@ -3,14 +3,17 @@
 [![Build Status](https://travis-ci.org/porjo/icemail.svg?branch=master)](https://travis-ci.org/porjo/icemail)
 [![Coverage Status](https://coveralls.io/repos/github/porjo/icemail/badge.svg?branch=master)](https://coveralls.io/github/porjo/icemail?branch=master)
 
-**Work in progress**
-
 Email catcher for development environments. Solves the problem of test emails becoming a nuisance to developers and customers.
 
 - acts as a 'smart relay' which by default stores all incoming mail rather than relaying it.
 - recipient addresses/domains can be whitelisted for auto-delivery, otherwise mail can be manually released via a web interface
 - single binary which does everything: mail server, mail client, web server
 - easy to install and configure
+
+**TODO**
+
+- decode HTML email content (currently only displays raw text)
+- TLS support
 
 ## Setup
 

@@ -161,10 +161,20 @@ func ParseQuery(input []byte) (Query, error) {
 		}
 		return &rv, nil
 	}
-	_, hasMin := tmp["min"]
-	_, hasMax := tmp["max"]
+	_, hasMin := tmp["min"].(float64)
+	_, hasMax := tmp["max"].(float64)
 	if hasMin || hasMax {
 		var rv NumericRangeQuery
+		err := json.Unmarshal(input, &rv)
+		if err != nil {
+			return nil, err
+		}
+		return &rv, nil
+	}
+	_, hasMinStr := tmp["min"].(string)
+	_, hasMaxStr := tmp["max"].(string)
+	if hasMinStr || hasMaxStr {
+		var rv TermRangeQuery
 		err := json.Unmarshal(input, &rv)
 		if err != nil {
 			return nil, err
@@ -238,6 +248,25 @@ func ParseQuery(input []byte) (Query, error) {
 	_, hasBool := tmp["bool"]
 	if hasBool {
 		var rv BoolFieldQuery
+		err := json.Unmarshal(input, &rv)
+		if err != nil {
+			return nil, err
+		}
+		return &rv, nil
+	}
+	_, hasTopLeft := tmp["top_left"]
+	_, hasBottomRight := tmp["bottom_right"]
+	if hasTopLeft && hasBottomRight {
+		var rv GeoBoundingBoxQuery
+		err := json.Unmarshal(input, &rv)
+		if err != nil {
+			return nil, err
+		}
+		return &rv, nil
+	}
+	_, hasDistance := tmp["distance"]
+	if hasDistance {
+		var rv GeoDistanceQuery
 		err := json.Unmarshal(input, &rv)
 		if err != nil {
 			return nil, err
