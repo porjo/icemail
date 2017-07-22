@@ -2,6 +2,7 @@
 	cursor: pointer;
 }
 
+
 #logo {
 	float: right;
 	font-size: 1.5em;
@@ -18,7 +19,7 @@
 	margin-top: 50px;
 }
 
-#results_bar {
+.results_bar {
 	margin-top: 20px;
 	margin-bottom: 5px;
 	margin-left: auto;
@@ -26,6 +27,12 @@
 	width: 400px;
 	color: #777;
 	position: relative;
+}
+
+#results_limit {
+	position: absolute;
+	right: 0;
+	top: 0;
 }
 
 .results_stats {
@@ -115,6 +122,7 @@
 	width: 100%;
 	max-height: 80vh;
 	overflow-y: auto;
+	white-space: pre-wrap;
 }
 
 .email_title {
@@ -163,6 +171,11 @@
 	position: absolute;
 	right: 20px;
 	float: none;
+}
+
+#message-header-table th {
+	text-align: right;
+	padding-right: 5px;
 }
 
 /*

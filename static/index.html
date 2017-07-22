@@ -24,10 +24,35 @@
 					</div>
 					<span @click="goBack()" class='back-link'><span class='icon-left-open-big'></span>Back</span>
 					<div class="row" id='message-view-header'>
-						<div class='email_title col-md-8'>{{title}}</div>
+						<div class="col-md-8">
+							<table id='message-header-table'>
+								<tr v-if='header.To'>
+									<th>To:</th><td>{{header.To | commaList}}</td>
+								</tr>
+								<tr v-if='header.Cc'>
+									<th>Cc:</th><td>{{header.Cc | commaList}}</td>
+								</tr>
+								<!--
+		<template v-if='header.Bcc.length'>
+		<strong>Bcc:</strong>&nbsp;{{header.Bcc | commaList}}<br>
+		</template>
+								-->
+								<tr v-if='header.From'>
+									<th>From:</th><td>{{header.From[0]}}</td>
+								</tr>
+								<tr v-if='header.Subject'>
+									<th>Subject:</th><td>{{header.Subject[0]}}</td>
+								</tr>
+							</table>
+						</div>
 						<div class='col-md-4 email_actions'>
 							<button v-if='delivered == ""' class="btn btn-info" @click="sendMsg(id)">Send Mail</button>
 							<span class='delivered_date' v-if='delivered != ""'><span class='icon-mail'></span>Email delivered: <span :title='delivered | formatted'>{{delivered | fromNow}}</span></span>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-12">
+							<pre class='panel panel-default email_body'>{{rawHeader}}</pre>
 						</div>
 					</div>
 					<div class="row">
@@ -56,7 +81,7 @@
 										<label for="searchFields" class="col-md-6 control-label">Search these fields:</label>
 										<div class="col-md-6">
 											<template v-for="field in fields">
-												<input type="checkbox" :value='field' v-model="request.locations">{{field}}
+												<input type="checkbox" :value='field' v-model="request.locations">&nbsp;{{field}}
 											</template>
 										</div>
 									</div>
@@ -71,14 +96,23 @@
 						</div>
 					</div>
 					<div class='no-results' v-if='!result.emails.length'>No results</div>
-					<template v-if='result.emails.length'>
-						<div class='results_bar' v-if='result.pages > 1'>
-							<div class='results_stats'>{{ result.offset + 1 }} to {{ result.offset + result.emails.length }} of {{result.total}} results</div>
+					<div class='results_bar' v-if='result.emails.length'>
+						<div class='results_stats' v-if='result.pages > 1'>
+							{{ result.offset + 1 }} to {{ result.offset + result.emails.length }} of {{result.total}} results
 						</div>
-						<div class='results_bar' v-if='result.pages == 1'>
-							<div class='results_stats'>{{result.emails.length}} results</div>
+						<div class='results_stats' v-if='result.pages == 1'>
+							{{result.emails.length}} results
 						</div>
-					</template>
+						<div id='results_limit'>
+							<select v-model.number="request.limit" @change="searchQuery()">
+								<option selected>10</option>
+								<option>20</option>
+								<option>50</option>
+								<option>100</option>
+								<option>200</option>
+							</select>
+						</div>
+					</div>
 					<table class='message_list table table-condensed table-striped table-hover' v-if="result.emails.length > 0">
 						<thead>
 							<tr>
@@ -99,7 +133,7 @@
 							</tr>
 						</tbody>
 					</table>
-					<div id='results_bar' v-if='result.emails.length && result.pages > 1'>
+					<div class='results_bar' v-if='result.emails.length && result.pages > 1'>
 						<router-link v-if='result.offset > 0' :to="{name: 'search', query: {query: request.query, page: currentPage()-1}}" id='results-page-back'><span class='icon-left-open-big'><span></router-link>
 						<router-link v-if='result.offset + result.emails.length < result.total' :to="{name: 'search', query: {query: request.query, page: currentPage()+1}}" id='results-page-fwd'><span class='icon-right-open-big'><span></router-link>
 						<div id='results_pages'>

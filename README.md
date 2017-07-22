@@ -12,7 +12,8 @@ Email catcher for development environments. Solves the problem of test emails be
 
 **TODO**
 
-- decode HTML email content (currently only displays raw text)
+- realtime updates as new messages arrive
+- decode HTML email content (currently displays raw text only)
 - TLS support
 
 ## Setup

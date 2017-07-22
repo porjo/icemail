@@ -1,8 +1,6 @@
 $(function() {
 	const apiURL = '//localhost:8080/api';
 
-	const msgLimit = 15;
-
 	const fields = [
 		"From",
 		"To",
@@ -27,11 +25,22 @@ $(function() {
 		}
 	});
 
+	Vue.filter('commaList', function(list) {
+		if( !$.isArray(list) ) { return ''; }
+
+		var str = '';
+		$.each(list, function(k,v) {
+			str += v + ', ';
+		});
+		return str.replace(/, $/,'');
+	});
+
 	const Message = Vue.extend({
 		template: '#message-view',
 		data: function() {
 			return {
-				title: '',
+				rawHeader: '',
+				header: {},
 				body: '',
 				id: 0,
 				delivered: '',
@@ -72,7 +81,8 @@ $(function() {
 			viewMsg: function() {
 				var self = this;
 				$.get(apiURL + '/search/' + this.$route.params.id, function(data) {
-					self.title = data.Emails[0].Header.Subject[0];
+					self.header = data.Emails[0].Header;
+					self.rawHeader = data.Emails[0].HeaderRaw;
 					self.body = data.Emails[0].Body;
 					self.id = data.Emails[0].ID;
 					if( 'Delivered' in data.Emails[0] ) {
@@ -94,7 +104,7 @@ $(function() {
 			return {
 				request: {
 					query: "",
-					limit: msgLimit,
+					limit: 20,
 					offset: 0,
 					locations: fields,
 				},

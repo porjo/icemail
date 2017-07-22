@@ -6,6 +6,9 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"mime"
+	"mime/multipart"
+	"mime/quotedprintable"
 	"net/http"
 	"net/mail"
 	"strings"
@@ -18,7 +21,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const ResultLimit = 100
+// hard limit on number of results returned
+const ResultLimit = 200
 
 const SearchPrefixLen = 3
 const SearchFuzziness = 2
@@ -52,7 +56,7 @@ type MailResult struct {
 type Email struct {
 	ID        string
 	Header    mail.Header
-	Body      string     `json:"Body,omitempty"`
+	Body      string
 	Delivered *time.Time `json:"Delivered,omitempty"`
 }
 
@@ -163,9 +167,14 @@ func (h *SearchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	bSearchRequest.SortBy([]string{"-Header.Date"})
 	bSearchRequest.Fields = []string{"Data", "Delivered"}
 	bSearchRequest.From = searchRequest.Offset
-	if searchRequest.Limit > 0 && searchRequest.Limit <= ResultLimit {
+
+	switch {
+	case searchRequest.Limit > ResultLimit:
+		http.Error(w, fmt.Sprintf("request limit of %d is greater than max allowed limit of %d", searchRequest.Limit, ResultLimit), 400)
+		return
+	case searchRequest.Limit > 0:
 		bSearchRequest.Size = searchRequest.Limit
-	} else {
+	default:
 		bSearchRequest.Size = ResultLimit
 	}
 
@@ -246,8 +255,12 @@ func doSearch(hRequest SearchRequest, bRequest *bleve.SearchRequest, includeBody
 			lr := Email{ID: hit.ID, Header: msg.Header}
 
 			if includeBody {
-				lr.Body = v
+				lr.Body, err = getBody(msg)
+				if err != nil {
+					return hResult, err
+				}
 			}
+
 			if deliveredS, ok := hit.Fields["Delivered"].(string); ok {
 				var d time.Time
 				if d, err = time.Parse(time.RFC3339, deliveredS); err != nil {
@@ -277,4 +290,36 @@ func mustEncode(w io.Writer, i interface{}) {
 	if err := e.Encode(i); err != nil {
 		panic(err)
 	}
+}
+
+func getBody(msg *mail.Message) (string, error) {
+	mediaType, params, err := mime.ParseMediaType(msg.Header.Get("Content-Type"))
+	if err != nil {
+		return "", err
+	}
+
+	if strings.HasPrefix(mediaType, "multipart/") {
+		mr := multipart.NewReader(msg.Body, params["boundary"])
+		for {
+			p, err := mr.NextPart()
+			if err == io.EOF {
+				break
+			}
+
+			if p.FileName() == "" {
+				b, err := ioutil.ReadAll(p)
+				if err != nil {
+					return "", err
+				}
+				return string(b), nil
+			}
+		}
+	} else if mediaType == "text/plain" && msg.Header.Get("Content-Transfer-Encoding") == "quoted-printable" {
+		b, err := ioutil.ReadAll(quotedprintable.NewReader(msg.Body))
+		if err != nil {
+			return "", err
+		}
+		return string(b), nil
+	}
+	return "", nil
 }
