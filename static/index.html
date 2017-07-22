@@ -25,7 +25,7 @@
 					<span @click="goBack()" class='back-link'><span class='icon-left-open-big'></span>Back</span>
 					<div class="row" id='message-view-header'>
 						<div class="col-md-8">
-							<table id='message-header-table'>
+							<table class='message-header-table'>
 								<tr v-if='header.To'>
 									<th>To:</th><td>{{header.To | commaList}}</td>
 								</tr>
@@ -52,7 +52,16 @@
 					</div>
 					<div class="row">
 						<div class="col-md-12">
-							<pre class='panel panel-default email_body'>{{rawHeader}}</pre>
+							<div class='panel panel-default message-header-extra'>
+								<table class='message-header-table'>
+									<tr v-for="(values, key) in header" v-if="['From','To','Subject', 'Cc'].indexOf(key) == -1">
+										<th>{{key}}:</th>
+										<td>
+											<div v-for="v in values">{{v}}</div>
+										</td>
+									</tr>
+								</table>
+							</div>
 						</div>
 					</div>
 					<div class="row">
@@ -81,14 +90,14 @@
 										<label for="searchFields" class="col-md-6 control-label">Search these fields:</label>
 										<div class="col-md-6">
 											<template v-for="field in fields">
-												<input type="checkbox" :value='field' v-model="request.locations">&nbsp;{{field}}
+												<input type="checkbox" :value='field' v-model="state.fields">&nbsp;{{field}}
 											</template>
 										</div>
 									</div>
 									<div class="form-group">
 										<label for="dateRange" class="col-md-6 control-label">Search back this many days:</label>
 										<div class='col-md-6'>
-											<input type="text" size=4 v-model="searchDays">&nbsp;(zero is unlimited)
+											<input type="text" size=4 v-model="state.searchDays">&nbsp;(zero is unlimited)
 										</div>
 									</div>
 								</div>
@@ -104,7 +113,7 @@
 							{{result.emails.length}} results
 						</div>
 						<div id='results_limit'>
-							<select v-model.number="request.limit" @change="searchQuery()">
+							<select v-model.number="state.limit" @change="searchQuery()">
 								<option selected>10</option>
 								<option>20</option>
 								<option>50</option>

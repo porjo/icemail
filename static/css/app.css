@@ -173,9 +173,19 @@
 	float: none;
 }
 
-#message-header-table th {
+.message-header-table {
+	font-family: monospace;
+}
+
+.message-header-table th {
+	min-width: 20%;
 	text-align: right;
+	vertical-align: top;	
 	padding-right: 5px;
+}
+
+.message-header-extra {
+	padding: 5px;
 }
 
 /*

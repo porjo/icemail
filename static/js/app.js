@@ -7,6 +7,14 @@ $(function() {
 		"Subject"
 	];
 
+	var store = {
+		state: {
+			limit: 20,
+			searchDays: 0,
+			fields: fields
+		}
+	};
+
 	const dateFormat = "ddd, DD MMM YYYY HH:mm:ss Z"
 
 	Vue.filter('fromNow', function(value) {
@@ -39,7 +47,6 @@ $(function() {
 		template: '#message-view',
 		data: function() {
 			return {
-				rawHeader: '',
 				header: {},
 				body: '',
 				id: 0,
@@ -82,7 +89,6 @@ $(function() {
 				var self = this;
 				$.get(apiURL + '/search/' + this.$route.params.id, function(data) {
 					self.header = data.Emails[0].Header;
-					self.rawHeader = data.Emails[0].HeaderRaw;
 					self.body = data.Emails[0].Body;
 					self.id = data.Emails[0].ID;
 					if( 'Delivered' in data.Emails[0] ) {
@@ -104,18 +110,18 @@ $(function() {
 			return {
 				request: {
 					query: "",
-					limit: 20,
+					limit: 0,
 					offset: 0,
-					locations: fields,
+					locations: []
 				},
-				searchDays: 0,
 				result: {
 					emails: [],
 					total: 0,
 					offset: 0,
 					error: ''
 				},
-				fields: fields
+				fields: fields,
+				state: store.state,
 			}
 		},
 
@@ -142,7 +148,7 @@ $(function() {
 			},
 
 			currentPage: function() {
-				return Math.ceil(this.result.offset / this.request.limit) + 1;
+				return Math.ceil(this.result.offset / this.state.limit) + 1;
 			},
 
 			// used to set active CSS class
@@ -180,12 +186,14 @@ $(function() {
 			searchMsg: function() {
 
 				var request = $.extend({}, this.request);
+				request.limit = this.state.limit;
+				request.locations = this.state.fields;
 
 				this.resetError();
 
-				if( this.searchDays > 0) {
+				if( this.state.searchDays > 0) {
 					var startTime = new Date();
-					startTime.setDate(startTime.getDate() - this.searchDays);
+					startTime.setDate(startTime.getDate() - this.state.searchDays);
 					request.starttime = startTime.toISOString();
 				}
 
