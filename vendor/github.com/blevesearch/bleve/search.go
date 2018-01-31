@@ -170,6 +170,16 @@ func (fr *FacetRequest) AddDateTimeRange(name string, start, end time.Time) {
 	fr.DateTimeRanges = append(fr.DateTimeRanges, &dateTimeRange{Name: name, Start: start, End: end})
 }
 
+// AddDateTimeRangeString adds a bucket to a field
+// containing date values.
+func (fr *FacetRequest) AddDateTimeRangeString(name string, start, end *string) {
+	if fr.DateTimeRanges == nil {
+		fr.DateTimeRanges = make([]*dateTimeRange, 0, 1)
+	}
+	fr.DateTimeRanges = append(fr.DateTimeRanges,
+		&dateTimeRange{Name: name, startString: start, endString: end})
+}
+
 // AddNumericRange adds a bucket to a field
 // containing numeric values.  Documents with a
 // numeric value falling into this range are
@@ -471,5 +481,10 @@ func (sr *SearchResult) Merge(other *SearchResult) {
 	if other.MaxScore > sr.MaxScore {
 		sr.MaxScore = other.MaxScore
 	}
+	if sr.Facets == nil && len(other.Facets) != 0 {
+		sr.Facets = other.Facets
+		return
+	}
+
 	sr.Facets.Merge(other.Facets)
 }
